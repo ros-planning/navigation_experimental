@@ -1,0 +1,24 @@
+<package>
+  <description brief="assisted_teleop">
+
+     assisted_teleop
+
+  </description>
+  <author>Tully Foote</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/assisted_teleop</url>
+  <depend package="tf"/>
+  <depend package="costmap_2d"/>
+  <depend package="roscpp"/>
+  <depend package="roslib"/>
+  <depend package="geometry_msgs"/>
+  <depend package="move_base_msgs"/>
+  <depend package="actionlib"/>
+  <depend package="message_filters"/>
+  <depend package="base_local_planner"/>
+  <depend package="angles"/>
+
+</package>
+
+

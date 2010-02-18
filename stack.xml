@@ -1,0 +1,10 @@
+<stack>
+  <description brief="navigation_experimental">navigation_experimental</description>
+  <author>Maintained by Eitan Marder-Eppstein</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/navigation_experimental</url>
+  <depend stack="ros" />
+  <depend stack="navigation" />
+
+</stack>

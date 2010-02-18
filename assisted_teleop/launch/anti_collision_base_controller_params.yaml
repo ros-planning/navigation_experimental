@@ -1,0 +1,21 @@
+footprint: [[-0.325, -0.325], [-0.325, 0.325], [0.325, 0.325], [0.325, -0.325]]
+shutdown_costmaps: false
+anti_collision_base_controller:
+  transform_tolerance: 0.2
+  costmap_visualization_rate: 0.0
+  world_model: costmap
+  sim_time: 1.5
+  sim_granularity: 0.025
+  vx_samples: 3
+  vtheta_samples: 20
+  max_vel_x: 0.45
+  min_vel_x: 0.05
+  max_vel_th: 1.0
+  min_vel_th: -1.0
+  min_in_place_vel_th: 0.25
+  xy_goal_tolerance: 0.08
+  yaw_goal_tolerance: 0.02
+  acc_limit_th: 3.2
+  acc_limit_x: 2.5
+  acc_limit_y: 2.5
+  
