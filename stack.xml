@@ -1,10 +1,13 @@
 <stack>
-  <description brief="navigation_experimental">navigation_experimental</description>
+  <description brief="navigation experimental">Experimental features for future releases of the navigation stack.</description>
   <author>Maintained by Eitan Marder-Eppstein</author>
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/navigation_experimental</url>
-  <depend stack="ros" />
-  <depend stack="navigation" />
+  <depend stack="common" /> <!-- actionlib -->
+  <depend stack="common_msgs" /> <!-- geometry_msgs -->
+  <depend stack="geometry" /> <!-- tf, angles -->
+  <depend stack="navigation" /> <!-- move_base_msgs, base_local_planner, costmap_2d -->
+  <depend stack="ros" /> <!-- roslib, roscpp, message_filters -->
 
 </stack>
