@@ -1,0 +1,20 @@
+<package>
+  <description brief="dwa_local_planner">
+
+     dwa_local_planner
+
+  </description>
+  <author>Eitan Marder-Eppstein</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/dwa_local_planner</url>
+  <depend package="roscpp"/>
+  <depend package="tf"/>
+  <depend package="costmap_2d"/>
+  <depend package="roslib"/>
+  <depend package="nav_core"/>
+  <depend package="nav_msgs"/>
+
+</package>
+
+
