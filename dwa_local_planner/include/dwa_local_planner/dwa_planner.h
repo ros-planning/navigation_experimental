@@ -87,6 +87,13 @@ namespace dwa_local_planner {
         return max_time;
       }
 
+      inline double yFromElipse(double a, double b, double x){
+        double y_squared = (1.0 - (x * x) / (a * a)) * (b * b);
+        if(y_squared < 0.0)
+          return 0.0;
+        return sqrt(y_squared);
+      }
+
       int getHeadingLookaheadIndex(double dist, const Eigen::Vector3f& pos);
 
       base_local_planner::MapGrid map_;

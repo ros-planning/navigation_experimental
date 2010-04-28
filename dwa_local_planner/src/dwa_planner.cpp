@@ -212,8 +212,25 @@ namespace dwa_local_planner {
     //Next, we'll just loop through the trajectories as normal
     for(unsigned int i = 0; i < vsamples_[0]; ++i){
       //we only want to set the y velocity if we're sampling more than one point
-      if(vsamples_[1] > 1)
-        vel_samp[1] = min_vel[1];
+      double local_dy = dv[1];
+      if(vsamples_[1] > 1){
+        //we want to limit our y velocity further based on the x speed we're sampling
+        //this will keep the robot from selecting a x/y velocity pair that makes the 
+        //robot go sideways towards the goal as the desired trajectory
+
+        //we'll define an ellipse centered at 0... going to the maximum x and y speeds respectively
+        //double abs_limited_y = yFromElipse(max_vel[0], max_vel[1], vel_samp[0]);
+        double abs_limited_y = yFromElipse(max_vel_x_, max_vel_y_, vel_samp[0]);
+
+        //we'll bound the minimum and maximum velocities and compute a step
+        double local_y_min = std::max(-1.0 * abs_limited_y, (double)min_vel[1]);
+        double local_y_max = std::min(abs_limited_y, (double)max_vel[1]);
+        local_dy  = (local_y_max - local_y_min) / (vsamples_[1] - 1);
+
+        vel_samp[1] = local_y_min;
+
+        //ROS_ERROR("%.2f: %.2f, %.2f, %.2f -- %.2f", vel_samp[0], local_y_min, local_y_max, local_dy, abs_limited_y);
+      }
       else
         vel_samp[1] = 0.0;
 
@@ -230,7 +247,7 @@ namespace dwa_local_planner {
           selectBestTrajectory(best_traj, comp_traj);
           vel_samp[2] += dv[2];
         }
-        vel_samp[1] += dv[1];
+        vel_samp[1] += local_dy;
       }
       vel_samp[0] += dv[0];
     }
