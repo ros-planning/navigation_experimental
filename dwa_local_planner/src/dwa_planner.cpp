@@ -618,11 +618,11 @@ namespace dwa_local_planner {
   int DWAPlanner::getHeadingLookaheadIndex(double lookahead_dist, const Eigen::Vector3f& pos){
     // move back on the global plan until we reach the first point within the
     // distance of the robot
-    for(int i = global_plan_.size(); i >= 0; --i){
+    for(int i = global_plan_.size() - 1; i >= 0; --i){
       double sq_dist = (pos[0] - global_plan_[i].pose.position.x) * (pos[0] - global_plan_[i].pose.position.x) 
         + (pos[1] - global_plan_[i].pose.position.y) * (pos[1] - global_plan_[i].pose.position.y);
       if(sq_dist <= (lookahead_dist * lookahead_dist)){
-        return (unsigned int)i;
+        return i;
       }
     }
     return -1;
