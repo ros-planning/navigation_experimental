@@ -57,7 +57,7 @@ namespace dwa_local_planner {
       ~DWAPlanner() {delete world_model_;}
 
       Eigen::Vector3f computeNewPositions(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel, double dt);
-      void generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, base_local_planner::Trajectory& traj);
+      void generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, const geometry_msgs::PoseStamped& heading_pose, base_local_planner::Trajectory& traj);
       base_local_planner::Trajectory computeTrajectories(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel);
       bool checkTrajectory(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel);
       base_local_planner::Trajectory findBestPath(tf::Stamped<tf::Pose> global_pose, tf::Stamped<tf::Pose> global_vel, 
@@ -72,10 +72,22 @@ namespace dwa_local_planner {
       void resetOscillationFlags();
       void resetOscillationFlagsIfPossible(const Eigen::Vector3f& pos, const Eigen::Vector3f& prev);
       void setOscillationFlags(base_local_planner::Trajectory* t);
+      double headingDiff(double gx, double gy, const Eigen::Vector3f& pos);
 
       inline Eigen::Vector3f getMaxSpeedToStopInTime(double time){
         return -0.5 * acc_lim_ * std::max(time, 0.0);
       }
+
+      inline double getStopTime(const Eigen::Vector3f& vel){
+        Eigen::Vector3f stop_vec = -2.0 * (vel.cwise() / acc_lim_);
+        double max_time = stop_vec[0];
+        for(unsigned int i = 1; i < 3; ++i){
+          max_time = std::max(max_time, (double)stop_vec[i]);
+        }
+        return max_time;
+      }
+
+      int getHeadingLookaheadIndex(double dist, const Eigen::Vector3f& pos);
 
       base_local_planner::MapGrid map_;
       costmap_2d::Costmap2DROS* costmap_ros_;
@@ -94,7 +106,7 @@ namespace dwa_local_planner {
       bool strafe_pos_only_, strafe_neg_only_, strafing_pos_, strafing_neg_;
       bool rot_pos_only_, rot_neg_only_, rotating_pos_, rotating_neg_;
       double oscillation_reset_dist_;
-      double heading_lookahead_;
+      double heading_lookahead_, rotation_lookahead_;
       double scaling_speed_, max_scaling_factor_;
       std::vector<geometry_msgs::PoseStamped> global_plan_;
   };

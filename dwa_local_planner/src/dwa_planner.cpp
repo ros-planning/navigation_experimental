@@ -35,6 +35,7 @@
 * Author: Eitan Marder-Eppstein
 *********************************************************************/
 #include <dwa_local_planner/dwa_planner.h>
+#include <angles/angles.h>
 
 namespace dwa_local_planner {
   DWAPlanner::DWAPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros) : costmap_ros_(NULL), world_model_(NULL) {
@@ -66,7 +67,7 @@ namespace dwa_local_planner {
 
     pn.param("min_in_place_rotational_vel", min_in_place_vel_th_, 0.4);
 
-    pn.param("sim_time", sim_time_, 1.0);
+    pn.param("sim_time", sim_time_, 1.5);
     pn.param("sim_granularity", sim_granularity_, 0.025);
     pn.param("path_distance_bias", pdist_scale_, 0.6);
     pn.param("goal_distance_bias", gdist_scale_, 0.8);
@@ -74,14 +75,15 @@ namespace dwa_local_planner {
 
     pn.param("stop_time_buffer", stop_time_buffer_, 0.2);
     pn.param("oscillation_reset_dist", oscillation_reset_dist_, 0.05);
-    pn.param("heading_lookahead", heading_lookahead_, 0.325);
+    pn.param("heading_lookahead", heading_lookahead_, 1.0);
+    pn.param("rotation_lookahead", rotation_lookahead_, 0.325);
 
     pn.param("scaling_speed", scaling_speed_, 0.5);
     pn.param("max_scaling_factor", max_scaling_factor_, 0.5);
 
     int vx_samp, vy_samp, vth_samp;
     pn.param("vx_samples", vx_samp, 3);
-    pn.param("vy_samples", vy_samp, 3);
+    pn.param("vy_samples", vy_samp, 10);
     pn.param("vth_samples", vth_samp, 20);
 
     if(vx_samp <= 0){
@@ -135,8 +137,8 @@ namespace dwa_local_planner {
       //next, to differentiate between rotations... we'll look ahead a bit
       double x_r, y_r, th_r;
       comp->getEndpoint(x_r, y_r, th_r);
-      x_r += heading_lookahead_ * cos(th_r);
-      y_r += heading_lookahead_ * sin(th_r);
+      x_r += rotation_lookahead_ * cos(th_r);
+      y_r += rotation_lookahead_ * sin(th_r);
 
       //get the goal distance of the associated cell
       unsigned int cell_x, cell_y; 
@@ -154,6 +156,18 @@ namespace dwa_local_planner {
   }
 
   base_local_planner::Trajectory DWAPlanner::computeTrajectories(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel){
+    //get the index of the cell that we'll use for lookahead
+    int lookahead_cell = getHeadingLookaheadIndex(heading_lookahead_, pos);
+
+    //make sure that we have a valid cell to look at
+    if(lookahead_cell < 0){
+      base_local_planner::Trajectory t;
+      t.cost_ = -1.0;
+      return t;
+    }
+
+    geometry_msgs::PoseStamped heading_pose = global_plan_[lookahead_cell];
+
     //compute the feasible velocity space based on the rate at which we run
     Eigen::Vector3f max_vel = Eigen::Vector3f::Zero();
     max_vel[0] = std::min(max_vel_x_, vel[0] + acc_lim_[0] * sim_period_);
@@ -165,8 +179,12 @@ namespace dwa_local_planner {
     min_vel[1] = std::max(min_vel_y_, vel[1] - acc_lim_[1] * sim_period_);
     min_vel[2] = std::max(min_vel_th_, vel[2] - acc_lim_[2] * sim_period_);
 
+    Eigen::Vector3f dv = Eigen::Vector3f::Zero();
     //we want to sample the velocity space regularly
-    Eigen::Vector3f dv = (max_vel - min_vel).cwise() / vsamples_;
+    for(unsigned int i = 0; i < 3; ++i){
+      if(vsamples_[i] > 1)
+        dv[i] = (max_vel[i] - min_vel[i]) / (vsamples_[i] - 1);
+    }
 
     //keep track of the best trajectory seen so far... we'll re-use two memeber vars for efficiency
     base_local_planner::Trajectory* best_traj = &traj_one_;
@@ -185,7 +203,7 @@ namespace dwa_local_planner {
     vel_samp[0] = min_vel[0];
     for(unsigned int i = 0; i < vsamples_[0]; ++i){
       //simulate the trajectory and select it if its better
-      generateTrajectory(pos, vel_samp, *comp_traj);
+      generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
       selectBestTrajectory(best_traj, comp_traj);
       vel_samp[0] += dv[0];
     }
@@ -208,7 +226,7 @@ namespace dwa_local_planner {
 
         for(unsigned int k = 0; k < vsamples_[2]; ++k){
           //simulate the trajectory and select it if its better
-          generateTrajectory(pos, vel_samp, *comp_traj);
+          generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
           selectBestTrajectory(best_traj, comp_traj);
           vel_samp[2] += dv[2];
         }
@@ -233,13 +251,13 @@ namespace dwa_local_planner {
         //we'll only simulate negative strafes if we haven't comitted to positive strafes
         if(vel_samp[1] < 0 && !strafe_pos_only_){
           //simulate the trajectory and select it if its better
-          generateTrajectory(pos, vel_samp, *comp_traj);
+          generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
           selectBestTrajectory(best_traj, comp_traj);
         }
         //we'll make the inverse check for positive strafing
         else if(!strafe_neg_only_){
           //simulate the trajectory and select it if its better
-          generateTrajectory(pos, vel_samp, *comp_traj);
+          generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
           selectBestTrajectory(best_traj, comp_traj);
         }
       }
@@ -263,13 +281,13 @@ namespace dwa_local_planner {
         //we'll only simulate negative rotations if we haven't comitted to positive rotations
         if(vel_samp[1] < 0 && !rot_pos_only_){
           //simulate the trajectory and select it if its better
-          generateTrajectory(pos, vel_samp, *comp_traj);
+          generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
           selectBestTrajectoryInPlaceRot(best_traj, comp_traj, best_heading_gdist);
         }
         //we'll make the inverse check for positive rotations
         else if(!rot_neg_only_){
           //simulate the trajectory and select it if its better
-          generateTrajectory(pos, vel_samp, *comp_traj);
+          generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
           selectBestTrajectoryInPlaceRot(best_traj, comp_traj, best_heading_gdist);
         }
       }
@@ -371,7 +389,7 @@ namespace dwa_local_planner {
     return footprint_cost;
   }
 
-  void DWAPlanner::generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, base_local_planner::Trajectory& traj){
+  void DWAPlanner::generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, const geometry_msgs::PoseStamped& heading_pose, base_local_planner::Trajectory& traj){
     //ROS_ERROR("%.2f, %.2f, %.2f - %.2f %.2f", vel[0], vel[1], vel[2], sim_time_, sim_granularity_);
     double impossible_cost = map_.map_.size();
 
@@ -383,6 +401,10 @@ namespace dwa_local_planner {
     //compute a timestep
     double dt = sim_time_ / num_steps;
     double time = 0.0;
+
+    //compute the time we would stop at applying max decelleration after the next period
+    double stop_time = sim_period_ + getStopTime(vel);
+    double heading_diff = M_PI;
 
     //initialize the costs for the trajectory
     double path_dist = 0.0;
@@ -451,6 +473,11 @@ namespace dwa_local_planner {
       path_dist = map_(cell_x, cell_y).path_dist;
       goal_dist = map_(cell_x, cell_y).goal_dist;
 
+      //check if we want to compute heading distance
+      if(time > stop_time && time < stop_time + dt){
+        heading_diff = headingDiff(heading_pose.pose.position.x, heading_pose.pose.position.y, pos);
+      }
+
       //if a point on this trajectory has no clear path to the goal... it is invalid
       if(impossible_cost <= goal_dist || impossible_cost <= path_dist){
         traj.cost_ = -2.0; //-2.0 means that we were blocked because propagation failed
@@ -465,14 +492,34 @@ namespace dwa_local_planner {
       time += dt;
     }
 
+    double velocity_mag = sqrt(vel[0] * vel[0] + vel[1] * vel[1]);
+
+    double normalized_heading = heading_diff / M_PI;
+    double normalized_vel = (1.0 - velocity_mag / sqrt(max_vel_x_ * max_vel_x_ + max_vel_y_ * max_vel_y_));
+    double normalized_occ_cost = occ_cost / costmap_2d::LETHAL_OBSTACLE;
+    double normalized_gdist = goal_dist / impossible_cost;
+    double normalized_pdist = path_dist / impossible_cost;
+
     //compute the final cost
-    traj.cost_ = pdist_scale_ * path_dist + gdist_scale_ * goal_dist; //+ occdist_scale_ * occ_cost;
+    //traj.cost_ = gdist_scale_ * normalized_gdist + pdist_scale_ * normalized_pdist + occdist_scale_* normalized_occ_cost; 
+    //traj.cost_ = 1.0 * normalized_heading + gdist_scale_ * normalized_gdist; // +   0.2 * normalized_vel + 0.2 * normalized_occ_cost;
+    traj.cost_ = 1.0 * normalized_heading + pdist_scale_ * path_dist + gdist_scale_ * goal_dist + occdist_scale_ * occ_cost;
     //ROS_ERROR("%.2f, %.2f, %.2f, %.2f", vel[0], vel[1], vel[2], traj.cost_);
   }
 
   bool DWAPlanner::checkTrajectory(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel){
+    //get the index of the cell that we'll use for lookahead
+    int lookahead_cell = getHeadingLookaheadIndex(heading_lookahead_, pos);
+
+    geometry_msgs::PoseStamped heading_pose;
+
+    //make sure that we have a valid cell to look at
+    if(lookahead_cell >= 0){
+      heading_pose = global_plan_[lookahead_cell];
+    }
+
     base_local_planner::Trajectory t;
-    generateTrajectory(pos, vel, t);
+    generateTrajectory(pos, vel, heading_pose, t);
 
     //if the trajectory is a legal one... the check passes
     if(t.cost_ >= 0)
@@ -523,5 +570,43 @@ namespace dwa_local_planner {
     }
 
     return best;
+  }
+
+  double DWAPlanner::headingDiff(double gx, double gy, const Eigen::Vector3f& pos){
+    Eigen::Vector2f v1(gx - pos[0], gy -pos[1]);
+    Eigen::Vector2f v2(cos(pos[2]), sin(pos[2]));
+
+    v1.normalize();
+    v2.normalize();
+    double dot = v1.dot(v2);
+    double perp_dot = v1[0] * v2[1] - v1[1] * v2[0];
+    return atan2(perp_dot, dot);
+
+    //double v1_x = gx - pos[0];
+    //double v1_y = gy - pos[1];
+    //double v2_x = cos(pos[2]);
+    //double v2_y = sin(pos[2]);
+
+    //double perp_dot = v1_x * v2_y - v1_y * v2_x;
+    //double dot = v1_x * v2_x + v1_y * v2_y;
+
+    ////get the signed angle
+    //double vector_angle = atan2(perp_dot, dot);
+
+    //double heading_diff = abs(vector_angle);
+    //return heading_diff;
+  }
+
+  int DWAPlanner::getHeadingLookaheadIndex(double lookahead_dist, const Eigen::Vector3f& pos){
+    // move back on the global plan until we reach the first point within the
+    // distance of the robot
+    for(int i = global_plan_.size(); i >= 0; --i){
+      double sq_dist = (pos[0] - global_plan_[i].pose.position.x) * (pos[0] - global_plan_[i].pose.position.x) 
+        + (pos[1] - global_plan_[i].pose.position.y) * (pos[1] - global_plan_[i].pose.position.y);
+      if(sq_dist <= (lookahead_dist * lookahead_dist)){
+        return (unsigned int)i;
+      }
+    }
+    return -1;
   }
 };
