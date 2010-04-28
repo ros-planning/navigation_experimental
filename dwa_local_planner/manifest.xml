@@ -16,6 +16,7 @@
   <depend package="nav_msgs"/>
   <depend package="eigen" />
   <depend package="base_local_planner" />
+  <depend package="angles" />
 </package>
 
 

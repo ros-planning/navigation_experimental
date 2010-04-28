@@ -37,102 +37,75 @@
 #include <dwa_local_planner/dwa_planner.h>
 
 namespace dwa_local_planner {
-  DWAPlanner::DWAPlanner() : costmap_ros_(NULL), tf_(NULL) {}
+  DWAPlanner::DWAPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros) : costmap_ros_(NULL){
+    costmap_ros_ = costmap_ros;
+    costmap_ros_->getCostmapCopy(costmap_);
 
-  void DWAPlanner::initialize(std::string name, tf::TransformListener* tf,
-      costmap_2d::Costmap2DROS* costmap_ros){
-    if(!initialized_){
-      tf_ = tf;
+    map_ = base_local_planner::MapGrid(costmap_.getSizeInCellsX(), costmap_.getSizeInCellsY(), 
+        costmap_.getResolution(), costmap_.getOriginX(), costmap_.getOriginY());
+    ros::NodeHandle pn("~/" + name);
 
-      costmap_ros_ = costmap_ros;
-      costmap_ros_->getCostmapCopy(costmap_);
+    double acc_lim_x, acc_lim_y, acc_lim_th;
+    pn.param("acc_lim_x", acc_lim_x, 2.5);
+    pn.param("acc_lim_y", acc_lim_y, 2.5);
+    pn.param("acc_lim_th", acc_lim_th, 3.2);
 
-      map_ = base_local_planner::MapGrid(costmap_.getSizeInCellsX(), costmap_.getSizeInCellsY(), 
-          costmap_.getResolution(), costmap_.getOriginX(), costmap_.getOriginY());
-      ros::NodeHandle pn("~/" + name);
+    acc_lim_[0] = acc_lim_x;
+    acc_lim_[1] = acc_lim_y;
+    acc_lim_[2] = acc_lim_th;
 
-      g_plan_pub_ = pn.advertise<nav_msgs::Path>("global_plan", 1);
-      l_plan_pub_ = pn.advertise<nav_msgs::Path>("local_plan", 1);
+    pn.param("max_vel_x", max_vel_x_, 0.5);
+    pn.param("min_vel_x", min_vel_x_, 0.1);
 
-      pn.param("prune_plan", prune_plan_, true);
+    pn.param("max_vel_y", max_vel_x_, 0.2);
+    pn.param("min_vel_y", min_vel_x_, -0.2);
+    pn.param("min_in_place_strafe_vel", min_in_place_vel_y_, 0.1);
 
-      pn.param("yaw_goal_tolerance", yaw_goal_tolerance_, 0.05);
-      pn.param("xy_goal_tolerance", xy_goal_tolerance_, 0.1);
+    pn.param("max_rotational_vel", max_vel_th_, 1.0);
+    min_vel_th_ = -1.0 * max_vel_th_;
 
-      pn.param("rot_stopped_vel", rot_stopped_vel_, 1e-2);
-      pn.param("trans_stopped_vel", trans_stopped_vel_, 1e-2);
+    pn.param("min_in_place_rotational_vel", min_in_place_vel_th_, 0.4);
 
-      //to get odometry information, we need to get a handle to the topic in the global namespace
-      ros::NodeHandle gn;
-      odom_sub_ = gn.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&DWAPlanner::odomCallback, this, _1));
+    pn.param("sim_time", sim_time_, 1.0);
+    pn.param("sim_granularity", sim_granularity_, 0.025);
+    pn.param("path_distance_bias", pdist_scale_, 0.6);
+    pn.param("goal_distance_bias", gdist_scale_, 0.8);
+    pn.param("occdist_scale", occdist_scale_, 0.01);
 
-      double acc_lim_x, acc_lim_y, acc_lim_th;
-      pn.param("acc_lim_x", acc_lim_x, 2.5);
-      pn.param("acc_lim_y", acc_lim_y, 2.5);
-      pn.param("acc_lim_th", acc_lim_th, 3.2);
+    pn.param("stop_time_buffer", stop_time_buffer_, 0.2);
+    pn.param("oscillation_reset_dist", oscillation_reset_dist_, 0.05);
+    pn.param("heading_lookahead", heading_lookahead_, 0.325);
 
-      acc_lim_[0] = acc_lim_x;
-      acc_lim_[1] = acc_lim_y;
-      acc_lim_[2] = acc_lim_th;
+    pn.param("scaling_speed", scaling_speed_, 0.5);
+    pn.param("max_scaling_factor", max_scaling_factor_, 0.5);
 
-      pn.param("max_vel_x", max_vel_x_, 0.5);
-      pn.param("min_vel_x", min_vel_x_, 0.1);
+    int vx_samp, vy_samp, vth_samp;
+    pn.param("vx_samples", vx_samp, 3);
+    pn.param("vy_samples", vy_samp, 3);
+    pn.param("vth_samples", vth_samp, 20);
 
-      pn.param("max_vel_y", max_vel_x_, 0.2);
-      pn.param("min_vel_y", min_vel_x_, -0.2);
-      pn.param("min_in_place_strafe_vel", min_in_place_vel_y_, 0.1);
-
-      pn.param("max_rotational_vel", max_vel_th_, 1.0);
-      min_vel_th_ = -1.0 * max_vel_th_;
-
-      pn.param("min_in_place_rotational_vel", min_in_place_vel_th_, 0.4);
-
-      pn.param("sim_time", sim_time_, 1.0);
-      pn.param("sim_granularity", sim_granularity_, 0.025);
-      pn.param("path_distance_bias", pdist_scale_, 0.6);
-      pn.param("goal_distance_bias", gdist_scale_, 0.8);
-      pn.param("occdist_scale", occdist_scale_, 0.01);
-
-      pn.param("stop_time_buffer", stop_time_buffer_, 0.2);
-      pn.param("oscillation_reset_dist", oscillation_reset_dist_, 0.05);
-      pn.param("heading_lookahead", heading_lookahead_, 0.325);
-
-      pn.param("scaling_speed", scaling_speed_, 0.5);
-      pn.param("max_scaling_factor", max_scaling_factor_, 0.5);
-
-      int vx_samp, vy_samp, vth_samp;
-      pn.param("vx_samples", vx_samp, 3);
-      pn.param("vy_samples", vy_samp, 3);
-      pn.param("vth_samples", vth_samp, 20);
-
-      if(vx_samp <= 0){
-        ROS_WARN("You've specified that you don't want to sample in the x dimension. We'll at least assume that you want to sample zero... so we're going to set vx_samples to 1 instead");
-        vx_samp = 1;
-      }
-
-      if(vy_samp <= 0){
-        ROS_WARN("You've specified that you don't want to sample in the y dimension. We'll at least assume that you want to sample zero... so we're going to set vy_samples to 1 instead");
-        vy_samp = 1;
-      }
-
-      if(vth_samp <= 0){
-        ROS_WARN("You've specified that you don't want to sample in the th dimension. We'll at least assume that you want to sample zero... so we're going to set vth_samples to 1 instead");
-        vth_samp = 1;
-      }
-
-      pn.param("sim_period", sim_period_, 0.1);
-
-      vsamples_[0] = vx_samp;
-      vsamples_[1] = vy_samp;
-      vsamples_[2] = vth_samp;
-
-      footprint_spec_ = costmap_ros_->getRobotFootprint();
-
-      initialized_ = true;
+    if(vx_samp <= 0){
+      ROS_WARN("You've specified that you don't want to sample in the x dimension. We'll at least assume that you want to sample zero... so we're going to set vx_samples to 1 instead");
+      vx_samp = 1;
     }
-    else{
-      ROS_WARN("This planner has already been initialized, doing nothing.");
+
+    if(vy_samp <= 0){
+      ROS_WARN("You've specified that you don't want to sample in the y dimension. We'll at least assume that you want to sample zero... so we're going to set vy_samples to 1 instead");
+      vy_samp = 1;
     }
+
+    if(vth_samp <= 0){
+      ROS_WARN("You've specified that you don't want to sample in the th dimension. We'll at least assume that you want to sample zero... so we're going to set vth_samples to 1 instead");
+      vth_samp = 1;
+    }
+
+    pn.param("sim_period", sim_period_, 0.1);
+
+    vsamples_[0] = vx_samp;
+    vsamples_[1] = vy_samp;
+    vsamples_[2] = vth_samp;
+
+    footprint_spec_ = costmap_ros_->getRobotFootprint();
 
   }
 
@@ -179,6 +152,9 @@ namespace dwa_local_planner {
   }
 
   void DWAPlanner::computeTrajectories(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel){
+    //make sure to get an updated copy of the costmap before computing trajectories
+    costmap_ros_->getCostmapCopy(costmap_);
+
     //compute the feasible velocity space based on the rate at which we run
     Eigen::Vector3f max_vel = Eigen::Vector3f::Zero();
     max_vel[0] = std::min(max_vel_x_, vel[0] + acc_lim_[0] * sim_period_);
@@ -485,4 +461,18 @@ namespace dwa_local_planner {
     //compute the final cost
     traj.cost_ = pdist_scale_ * path_dist + gdist_scale_ * goal_dist + occdist_scale_ * occ_cost;
   }
+
+  bool DWAPlanner::checkTrajectory(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel){
+    base_local_planner::Trajectory t;
+    generateTrajectory(pos, vel, t);
+
+    //if the trajectory is a legal one... the check passes
+    if(t.cost_ >= 0)
+      return true;
+
+    //otherwise the check fails
+    return false;
+  }
+
+
 };

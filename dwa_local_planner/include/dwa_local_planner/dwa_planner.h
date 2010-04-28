@@ -52,21 +52,17 @@
 namespace dwa_local_planner {
   class DWAPlanner {
     public:
-      DWAPlanner();
+      DWAPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
 
       ~DWAPlanner() {}
-
-      void initialize(std::string name, tf::TransformListener* tf,
-          costmap_2d::Costmap2DROS* costmap_ros);
 
       Eigen::Vector3f computeNewPositions(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel, double dt);
       void generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, base_local_planner::Trajectory& traj);
       void computeTrajectories(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel);
+      bool checkTrajectory(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel);
       
 
     private:
-      void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){}
-
       double footprintCost(const Eigen::Vector3f& pos, double scale);
       void selectBestTrajectory(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp);
       void selectBestTrajectoryInPlaceRot(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp, double& best_heading_dist);
@@ -81,7 +77,6 @@ namespace dwa_local_planner {
       base_local_planner::MapGrid map_;
       costmap_2d::Costmap2DROS* costmap_ros_;
       costmap_2d::Costmap2D costmap_;
-      tf::TransformListener* tf_;
       double stop_time_buffer_;
       double pdist_scale_, gdist_scale_, occdist_scale_;
       Eigen::Vector3f acc_lim_, vsamples_, prev_stationary_pos_;
@@ -98,12 +93,6 @@ namespace dwa_local_planner {
       double oscillation_reset_dist_;
       double heading_lookahead_;
       double scaling_speed_, max_scaling_factor_;
-      double rot_stopped_vel_, trans_stopped_vel_;
-      double yaw_goal_tolerance_, xy_goal_tolerance_;
-      bool prune_plan_;
-      bool initialized_;
-      ros::Subscriber odom_sub_;
-      ros::Publisher g_plan_pub_, l_plan_pub_;
   };
 };
 #endif
