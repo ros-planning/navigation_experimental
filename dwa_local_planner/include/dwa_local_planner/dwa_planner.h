@@ -58,8 +58,11 @@ namespace dwa_local_planner {
 
       Eigen::Vector3f computeNewPositions(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel, double dt);
       void generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, base_local_planner::Trajectory& traj);
-      void computeTrajectories(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel);
+      base_local_planner::Trajectory computeTrajectories(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel);
       bool checkTrajectory(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel);
+      base_local_planner::Trajectory findBestPath(tf::Stamped<tf::Pose> global_pose, tf::Stamped<tf::Pose> global_vel, 
+          tf::Stamped<tf::Pose>& drive_velocities);
+      void updatePlan(const std::vector<geometry_msgs::PoseStamped>& new_plan);
       
 
     private:
@@ -93,6 +96,7 @@ namespace dwa_local_planner {
       double oscillation_reset_dist_;
       double heading_lookahead_;
       double scaling_speed_, max_scaling_factor_;
+      std::vector<geometry_msgs::PoseStamped> global_plan_;
   };
 };
 #endif

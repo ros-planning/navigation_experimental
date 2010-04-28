@@ -44,6 +44,9 @@ namespace dwa_local_planner {
     public:
       DWAPlannerROS() : costmap_ros_(NULL), tf_(NULL), initialized_(false) {}
       void initialize(std::string name, tf::TransformListener* tf, costmap_2d::Costmap2DROS* costmap_ros);
+      bool isGoalReached();
+      bool setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan);
+      bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel);
 
     private:
       bool rotateToGoal(const tf::Stamped<tf::Pose>& global_pose, const tf::Stamped<tf::Pose>& robot_vel, double goal_th, geometry_msgs::Twist& cmd_vel);
@@ -61,6 +64,7 @@ namespace dwa_local_planner {
       boost::mutex odom_mutex_;
       nav_msgs::Odometry base_odom_;
       boost::shared_ptr<DWAPlanner> dp_;
+      std::vector<geometry_msgs::PoseStamped> global_plan_;
   };
 };
 #endif

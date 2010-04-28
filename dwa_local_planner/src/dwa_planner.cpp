@@ -151,10 +151,7 @@ namespace dwa_local_planner {
     }
   }
 
-  void DWAPlanner::computeTrajectories(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel){
-    //make sure to get an updated copy of the costmap before computing trajectories
-    costmap_ros_->getCostmapCopy(costmap_);
-
+  base_local_planner::Trajectory DWAPlanner::computeTrajectories(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel){
     //compute the feasible velocity space based on the rate at which we run
     Eigen::Vector3f max_vel = Eigen::Vector3f::Zero();
     max_vel[0] = std::min(max_vel_x_, vel[0] + acc_lim_[0] * sim_period_);
@@ -283,6 +280,10 @@ namespace dwa_local_planner {
       //check if we can reset any oscillation flags
       resetOscillationFlagsIfPossible(pos, prev_stationary_pos_);
     }
+
+    //TODO: Think about whether we want to try to do things like back up when a valid trajectory is not found
+
+    return *best_traj;
 
   }
 
@@ -474,5 +475,46 @@ namespace dwa_local_planner {
     return false;
   }
 
+  void DWAPlanner::updatePlan(const std::vector<geometry_msgs::PoseStamped>& new_plan){
+    global_plan_.resize(new_plan.size());
+    for(unsigned int i = 0; i < new_plan.size(); ++i){
+      global_plan_[i] = new_plan[i];
+    }
+  }
 
+  //given the current state of the robot, find a good trajectory
+  base_local_planner::Trajectory DWAPlanner::findBestPath(tf::Stamped<tf::Pose> global_pose, tf::Stamped<tf::Pose> global_vel, 
+      tf::Stamped<tf::Pose>& drive_velocities){
+
+    //make sure to get an updated copy of the costmap before computing trajectories
+    costmap_ros_->getCostmapCopy(costmap_);
+
+    Eigen::Vector3f pos(global_pose.getOrigin().getX(), global_pose.getOrigin().getY(), tf::getYaw(global_pose.getRotation()));
+    Eigen::Vector3f vel(global_vel.getOrigin().getX(), global_vel.getOrigin().getY(), tf::getYaw(global_vel.getRotation()));
+
+    //reset the map for new operations
+    map_.resetPathDist();
+
+    //make sure that we update our path based on the global plan and compute costs
+    map_.setPathCells(costmap_, global_plan_);
+    ROS_DEBUG("Path/Goal distance computed");
+
+    //rollout trajectories and find the minimum cost one
+    base_local_planner::Trajectory best = computeTrajectories(pos, vel);
+    ROS_DEBUG("Trajectories created");
+
+    //if we don't have a legal trajectory, we'll just command zero
+    if(best.cost_ < 0){
+      drive_velocities.setIdentity();
+    }
+    else{
+      btVector3 start(best.xv_, best.yv_, 0);
+      drive_velocities.setOrigin(start);
+      btMatrix3x3 matrix;
+      matrix.setRotation(tf::createQuaternionFromYaw(best.thetav_));
+      drive_velocities.setBasis(matrix);
+    }
+
+    return best;
+  }
 };

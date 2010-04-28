@@ -35,6 +35,7 @@
 * Author: Eitan Marder-Eppstein
 *********************************************************************/
 #include <dwa_local_planner/dwa_planner_ros.h>
+#include <base_local_planner/goal_functions.h>
 
 namespace dwa_local_planner {
   void DWAPlannerROS::initialize(std::string name, tf::TransformListener* tf,
@@ -111,6 +112,173 @@ namespace dwa_local_planner {
     cmd_vel.angular.z = 0.0;
     return false;
 
+  }
+
+  bool DWAPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel){
+    if(!initialized_){
+      ROS_ERROR("This planner has not been initialized, please call initialize() before using this planner");
+      return false;
+    }
+
+    std::vector<geometry_msgs::PoseStamped> local_plan;
+    tf::Stamped<tf::Pose> global_pose;
+    if(!costmap_ros_->getRobotPose(global_pose))
+      return false;
+
+    costmap_2d::Costmap2D costmap;
+    costmap_ros_->getCostmapCopy(costmap);
+    std::vector<geometry_msgs::PoseStamped> transformed_plan;
+    //get the global plan in our frame
+    if(!base_local_planner::transformGlobalPlan(*tf_, global_plan_, costmap, costmap_ros_->getGlobalFrameID(), transformed_plan)){
+      ROS_WARN("Could not transform the global plan to the frame of the controller");
+      return false;
+    }
+
+    //now we'll prune the plan based on the position of the robot
+    if(prune_plan_)
+      base_local_planner::prunePlan(global_pose, transformed_plan, global_plan_);
+
+
+    //we also want to clear the robot footprint from the costmap we're using
+    costmap_ros_->clearRobotFootprint();
+
+    // Set current velocities from odometry
+    geometry_msgs::Twist global_vel;
+
+    {
+      boost::mutex::scoped_lock lock(odom_mutex_);
+      global_vel.linear.x = base_odom_.twist.twist.linear.x;
+      global_vel.linear.y = base_odom_.twist.twist.linear.y;
+      global_vel.angular.z = base_odom_.twist.twist.angular.z;
+    }
+
+    tf::Stamped<tf::Pose> drive_cmds;
+    drive_cmds.frame_id_ = costmap_ros_->getBaseFrameID();
+
+    tf::Stamped<tf::Pose> robot_vel;
+    robot_vel.setData(btTransform(tf::createQuaternionFromYaw(global_vel.angular.z), btVector3(global_vel.linear.x, global_vel.linear.y, 0)));
+    robot_vel.frame_id_ = costmap_ros_->getBaseFrameID();
+    robot_vel.stamp_ = ros::Time();
+
+    /* For timing uncomment
+    struct timeval start, end;
+    double start_t, end_t, t_diff;
+    gettimeofday(&start, NULL);
+    */
+
+    //if the global plan passed in is empty... we won't do anything
+    if(transformed_plan.empty())
+      return false;
+
+    tf::Stamped<tf::Pose> goal_point;
+    tf::poseStampedMsgToTF(transformed_plan.back(), goal_point);
+    //we assume the global goal is the last point in the global plan
+    double goal_x = goal_point.getOrigin().getX();
+    double goal_y = goal_point.getOrigin().getY();
+
+    double yaw = tf::getYaw(goal_point.getRotation());
+
+    double goal_th = yaw;
+
+    //check to see if we've reached the goal position
+    if(base_local_planner::goalPositionReached(global_pose, goal_x, goal_y, xy_goal_tolerance_)){
+      //check to see if the goal orientation has been reached
+      if(base_local_planner::goalOrientationReached(global_pose, goal_th, yaw_goal_tolerance_)){
+        //set the velocity command to zero
+        cmd_vel.linear.x = 0.0;
+        cmd_vel.linear.y = 0.0;
+        cmd_vel.angular.z = 0.0;
+      }
+      else {
+        dp_->updatePlan(transformed_plan);
+
+        //compute what trajectory to drive along
+        base_local_planner::Trajectory path = dp_->findBestPath(global_pose, robot_vel, drive_cmds);
+        if(!rotateToGoal(global_pose, robot_vel, goal_th, cmd_vel))
+          return false;
+      }
+
+      //publish an empty plan because we've reached our goal position
+      base_local_planner::publishPlan(transformed_plan, g_plan_pub_, 0.0, 1.0, 0.0, 0.0);
+      base_local_planner::publishPlan(local_plan, l_plan_pub_, 0.0, 0.0, 1.0, 0.0);
+
+      //we don't actually want to run the controller when we're just rotating to goal
+      return true;
+    }
+
+    dp_->updatePlan(transformed_plan);
+
+    //compute what trajectory to drive along
+    base_local_planner::Trajectory path = dp_->findBestPath(global_pose, robot_vel, drive_cmds);
+
+    /* For timing uncomment
+    gettimeofday(&end, NULL);
+    start_t = start.tv_sec + double(start.tv_usec) / 1e6;
+    end_t = end.tv_sec + double(end.tv_usec) / 1e6;
+    t_diff = end_t - start_t;
+    ROS_INFO("Cycle time: %.9f", t_diff);
+    */
+
+    //pass along drive commands
+    cmd_vel.linear.x = drive_cmds.getOrigin().getX();
+    cmd_vel.linear.y = drive_cmds.getOrigin().getY();
+    yaw = tf::getYaw(drive_cmds.getRotation());
+
+    cmd_vel.angular.z = yaw;
+
+    //if we cannot move... tell someone
+    if(path.cost_ < 0){
+      local_plan.clear();
+      base_local_planner::publishPlan(transformed_plan, g_plan_pub_, 0.0, 1.0, 0.0, 0.0);
+      base_local_planner::publishPlan(local_plan, l_plan_pub_, 0.0, 0.0, 1.0, 0.0);
+      return false;
+    }
+
+    // Fill out the local plan
+    for(unsigned int i = 0; i < path.getPointsSize(); ++i){
+      double p_x, p_y, p_th;
+      path.getPoint(i, p_x, p_y, p_th);
+
+      tf::Stamped<tf::Pose> p = tf::Stamped<tf::Pose>(tf::Pose(tf::createQuaternionFromYaw(p_th), tf::Point(p_x, p_y, 0.0)), ros::Time::now(), costmap_ros_->getGlobalFrameID());
+      geometry_msgs::PoseStamped pose;
+      tf::poseStampedTFToMsg(p, pose);
+      local_plan.push_back(pose);
+    }
+
+    //publish information to the visualizer
+    base_local_planner::publishPlan(transformed_plan, g_plan_pub_, 0.0, 1.0, 0.0, 0.0);
+    base_local_planner::publishPlan(local_plan, l_plan_pub_, 0.0, 0.0, 1.0, 0.0);
+    return true;
+  }
+
+  bool DWAPlannerROS::isGoalReached(){
+    if(!initialized_){
+      ROS_ERROR("This planner has not been initialized, please call initialize() before using this planner");
+      return false;
+    }
+
+    //copy over the odometry information
+    nav_msgs::Odometry base_odom;
+    {
+    boost::recursive_mutex::scoped_lock(odom_lock_);
+      base_odom = base_odom_;
+    }
+
+    return base_local_planner::isGoalReached(*tf_, global_plan_, *costmap_ros_, costmap_ros_->getGlobalFrameID(), base_odom, 
+        rot_stopped_vel_, trans_stopped_vel_, xy_goal_tolerance_, yaw_goal_tolerance_);
+  }
+
+  bool DWAPlannerROS::setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan){
+    if(!initialized_){
+      ROS_ERROR("This planner has not been initialized, please call initialize() before using this planner");
+      return false;
+    }
+
+    //reset the global plan
+    global_plan_.clear();
+    global_plan_ = orig_global_plan;
+
+    return true;
   }
 
 };
