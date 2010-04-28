@@ -45,6 +45,7 @@
 #include <base_local_planner/trajectory.h>
 #include <base_local_planner/map_grid.h>
 #include <base_local_planner/costmap_model.h>
+#include <ros/ros.h>
 
 namespace dwa_local_planner {
   class DWAPlanner {
@@ -58,6 +59,7 @@ namespace dwa_local_planner {
 
       Eigen::Vector3f computeNewPositions(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel, double dt);
       void generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, base_local_planner::Trajectory& traj);
+      void computeTrajectories(const Eigen::Vector3f& vel);
       
 
     private:
@@ -70,13 +72,20 @@ namespace dwa_local_planner {
       }
 
       base_local_planner::MapGrid map_;
+      costmap_2d::Costmap2DROS* costmap_ros_;
       costmap_2d::Costmap2D costmap_;
+      tf::TransformListener* tf_;
       double stop_time_buffer_;
       double pdist_scale_, gdist_scale_, occdist_scale_;
-      Eigen::Vector3f acc_lim_;
+      Eigen::Vector3f acc_lim_, vsamples_;
       std::vector<geometry_msgs::Point> footprint_spec_;
       base_local_planner::CostmapModel* world_model_;
       double sim_time_, sim_granularity_;
+      double max_vel_x_, min_vel_x_;
+      double max_vel_y_, min_vel_y_, min_in_place_vel_y_;
+      double max_vel_th_, min_vel_th_, min_in_place_vel_th_;
+      double sim_period_;
+      base_local_planner::Trajectory traj_one_, traj_two_;
   };
 };
 #endif

@@ -39,6 +39,67 @@
 namespace dwa_local_planner {
   void DWAPlanner::initialize(std::string name, tf::TransformListener* tf,
       costmap_2d::Costmap2DROS* costmap_ros){
+    tf_ = tf;
+    costmap_ros_ = costmap_ros;
+    ros::NodeHandle pn("~/" + name);
+
+    double acc_lim_x, acc_lim_y, acc_lim_th;
+    pn.param("acc_lim_x", acc_lim_x, 2.5);
+    pn.param("acc_lim_y", acc_lim_y, 2.5);
+    pn.param("acc_lim_th", acc_lim_th, 3.2);
+
+    acc_lim_[0] = acc_lim_x;
+    acc_lim_[1] = acc_lim_y;
+    acc_lim_[2] = acc_lim_th;
+
+    pn.param("max_vel_x", max_vel_x_, 0.5);
+    pn.param("min_vel_x", min_vel_x_, 0.1);
+
+    pn.param("max_vel_y", max_vel_x_, 0.2);
+    pn.param("min_vel_y", min_vel_x_, -0.2);
+    pn.param("min_in_place_strafe_vel", min_in_place_vel_y_, 0.1);
+
+    pn.param("max_rotational_vel", max_vel_th_, 1.0);
+    min_vel_th_ = -1.0 * max_vel_th_;
+
+    pn.param("min_in_place_rotational_vel", min_in_place_vel_th_, 0.4);
+
+    pn.param("sim_time", sim_time_, 1.0);
+    pn.param("sim_granularity", sim_granularity_, 0.025);
+    pn.param("path_distance_bias", pdist_scale_, 0.6);
+    pn.param("goal_distance_bias", gdist_scale_, 0.8);
+    pn.param("occdist_scale", occdist_scale_, 0.01);
+
+    pn.param("stop_time_buffer", stop_time_buffer_, 0.2);
+
+    int vx_samp, vy_samp, vth_samp;
+    pn.param("vx_samples", vx_samp, 3);
+    pn.param("vy_samples", vy_samp, 3);
+    pn.param("vth_samples", vth_samp, 20);
+
+    if(vx_samp <= 0){
+      ROS_WARN("You've specified that you don't want to sample in the x dimension. We'll at least assume that you want to sample zero... so we're going to set vx_samples to 1 instead");
+      vx_samp = 1;
+    }
+
+    if(vy_samp <= 0){
+      ROS_WARN("You've specified that you don't want to sample in the y dimension. We'll at least assume that you want to sample zero... so we're going to set vy_samples to 1 instead");
+      vy_samp = 1;
+    }
+
+    if(vth_samp <= 0){
+      ROS_WARN("You've specified that you don't want to sample in the th dimension. We'll at least assume that you want to sample zero... so we're going to set vth_samples to 1 instead");
+      vth_samp = 1;
+    }
+
+    pn.param("sim_period", sim_period_, 0.1);
+
+    vsamples_[0] = vx_samp;
+    vsamples_[1] = vy_samp;
+    vsamples_[2] = vth_samp;
+
+    footprint_spec_ = costmap_ros_->getRobotFootprint();
+
   }
 
   Eigen::Vector3f DWAPlanner::computeNewPositions(const Eigen::Vector3f& pos, 
@@ -48,6 +109,100 @@ namespace dwa_local_planner {
     new_pos[1] = pos[1] + (vel[0] * sin(pos[2]) + vel[1] * sin(M_PI_2 + pos[2])) * dt;
     new_pos[2] = pos[2] + vel[2] * dt;
     return new_pos;
+  }
+
+  void DWAPlanner::computeTrajectories(const Eigen::Vector3f& vel){
+    //compute the feasible velocity space based on the rate at which we run
+    Eigen::Vector3f max_vel = Eigen::Vector3f::Zero();
+    max_vel[0] = std::min(max_vel_x_, vel[0] + acc_lim_[0] * sim_period_);
+    max_vel[1] = std::min(max_vel_y_, vel[1] + acc_lim_[1] * sim_period_);
+    max_vel[2] = std::min(max_vel_th_, vel[2] + acc_lim_[2] * sim_period_);
+
+    Eigen::Vector3f min_vel = Eigen::Vector3f::Zero();
+    min_vel[0] = std::max(min_vel_x_, vel[0] - acc_lim_[0] * sim_period_);
+    min_vel[1] = std::max(min_vel_y_, vel[1] - acc_lim_[1] * sim_period_);
+    min_vel[2] = std::max(min_vel_th_, vel[2] - acc_lim_[2] * sim_period_);
+
+    //we want to sample the velocity space regularly
+    Eigen::Vector3f dv = (max_vel - min_vel).cwise() / vsamples_;
+
+    //keep track of the best trajectory seen so far... we'll re-use two memeber vars for efficiency
+    base_local_planner::Trajectory* best_traj = &traj_one_;
+    best_traj->cost_ = 1.0;
+
+    base_local_planner::Trajectory* comp_traj = &traj_one_;
+    comp_traj->cost_ = 1.0;
+
+    base_local_planner::Trajectory* swap = NULL;
+
+    Eigen::Vector3f vel_samp = Eigen::Vector3f::Zero();
+
+    //first... we'll make sure to simulate the case where y and th are zero
+    vel_samp[0] = min_vel_x_;
+    for(unsigned int i = 0; i < vsamples_[0]; ++i){
+      //TODO:simulate
+      vel_samp[0] += dv[0];
+    }
+
+    vel_samp[0] = min_vel_x_;
+    //Next, we'll just loop through the trajectories as normal
+    for(unsigned int i = 0; i < vsamples_[0]; ++i){
+      //we only want to set the y velocity if we're sampling more than one point
+      if(vsamples_[1] > 1)
+        vel_samp[1] = min_vel_y_;
+      else
+        vel_samp[1] = 0.0;
+
+      for(unsigned int j = 0; j < vsamples_[1]; ++j){
+        //we only want to set the th velocity if we're sampling more than one point
+        if(vsamples_[2] > 1)
+          vel_samp[2] = min_vel_th_;
+        else
+          vel_samp[2] = 0.0;
+
+        for(unsigned int k = 0; k < vsamples_[2]; ++k){
+          //TODO:simulate
+          vel_samp[2] += dv[2];
+        }
+        vel_samp[1] += dv[1];
+      }
+      vel_samp[0] += dv[0];
+    }
+
+    //we want to make sure to simulate strafing without motion in the x direction
+    if(vsamples_[1] > 1){
+      vel_samp[0] = 0.0;
+      vel_samp[1] = min_vel_y_;
+      vel_samp[2] = 0.0;
+
+      for(unsigned int i = 0; i < vsamples_[1]; ++i){
+        //we won't sample trajectories that don't meet the minimum speed requirements
+        if(fabs(vel_samp[1]) < min_in_place_vel_y_){
+          vel_samp[1] += dv[1];
+          continue;
+        }
+
+        //TODO:simulate make sure to check for oscillation
+      }
+    }
+
+    //and we have the special case where we want to simulate in-place rotations
+    if(vsamples_[2] > 1){
+      vel_samp[0] = 0.0;
+      vel_samp[1] = 0.0;
+      vel_samp[2] = min_vel_th_;
+
+      for(unsigned int i = 0; i < vsamples_[2]; ++i){
+        //we won't sample trajectories that don't meet the minimum speed requirements
+        if(fabs(vel_samp[2]) < min_in_place_vel_th_){
+          vel_samp[2] += dv[2];
+          continue;
+        }
+
+        //TODO: simulate and make sure to differentiate between rotation scores and check oscillation
+      }
+    }
+
   }
 
   double DWAPlanner::footprintCost(const Eigen::Vector3f& pos, double scale){
@@ -75,10 +230,14 @@ namespace dwa_local_planner {
   void DWAPlanner::generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, base_local_planner::Trajectory& traj){
     double impossible_cost = map_.map_.size();
 
-    //compute the number of steps we'll take
-    int num_steps = ceil(sim_time_ / sim_granularity_);
+    double vmag = sqrt(vel[0] * vel[0] + vel[1] * vel[1]);
 
-    //compute a timestep that is guaranteed to be less than our granularity and will end at the desired time
+    //compute the number of steps we must take along this trajectory to be "safe"
+
+    //compute the number of steps we'll take
+    int num_steps = ceil(std::max((vmag * sim_time_) / sim_granularity_, fabs(vel[2]) / sim_granularity_));
+
+    //compute a timestep
     double dt = sim_time_ / num_steps;
     double time = 0.0;
 
@@ -126,7 +285,7 @@ namespace dwa_local_planner {
         Eigen::Vector3f max_vel = getMaxSpeedToStopInTime(time - stop_time_buffer_);
 
         //check if we can stop in time
-        if(abs_vel[0] <= max_vel[0] && abs_vel[1] < max_vel[1] && abs_vel[2] < max_vel[2]){
+        if(abs_vel[0] < max_vel[0] && abs_vel[1] < max_vel[1] && abs_vel[2] < max_vel[2]){
           //if we can, then we'll just break out of the loop here.. no point in checking future points
           break;
         }
