@@ -37,14 +37,20 @@
 #ifndef DWA_LOCAL_PLANNER_DWA_PLANNER_H_
 #define DWA_LOCAL_PLANNER_DWA_PLANNER_H_
 #include <queue>
+#include <Eigen/Core>
+#include <costmap_2d/costmap_2d_ros.h>
+#include <tf/transform_listener.h>
 
 namespace dwa_local_planner {
   class DWAPlanner {
     public:
-      DWAPlanner();
+      DWAPlanner() {}
 
       void initialize(std::string name, tf::TransformListener* tf,
           costmap_2d::Costmap2DROS* costmap_ros);
+
+      Eigen::Vector3f computeNewPositions(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel, double dt);
+      
 
     private:
       void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
