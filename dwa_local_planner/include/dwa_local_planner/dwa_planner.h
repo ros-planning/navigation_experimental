@@ -59,13 +59,14 @@ namespace dwa_local_planner {
 
       Eigen::Vector3f computeNewPositions(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel, double dt);
       void generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, base_local_planner::Trajectory& traj);
-      void computeTrajectories(const Eigen::Vector3f& vel);
+      void computeTrajectories(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel);
       
 
     private:
       //void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
       double footprintCost(const Eigen::Vector3f& pos, double scale);
+      void selectBestTrajectory(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp);
 
       inline Eigen::Vector3f getMaxSpeedToStopInTime(double time){
         return -0.5 * acc_lim_ * std::max(time, 0.0);

@@ -110,8 +110,17 @@ namespace dwa_local_planner {
     new_pos[2] = pos[2] + vel[2] * dt;
     return new_pos;
   }
+  
+  void DWAPlanner::selectBestTrajectory(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp){
+    //check if the comp trajectory is better than the current best and, if so, swap them
+    if(comp->cost_ >= 0 && (comp->cost_ < best->cost_ || best->cost_ < 0)){
+      base_local_planner::Trajectory* swap = best;
+      best = comp;
+      comp = swap;
+    }
+  }
 
-  void DWAPlanner::computeTrajectories(const Eigen::Vector3f& vel){
+  void DWAPlanner::computeTrajectories(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel){
     //compute the feasible velocity space based on the rate at which we run
     Eigen::Vector3f max_vel = Eigen::Vector3f::Zero();
     max_vel[0] = std::min(max_vel_x_, vel[0] + acc_lim_[0] * sim_period_);
@@ -130,17 +139,17 @@ namespace dwa_local_planner {
     base_local_planner::Trajectory* best_traj = &traj_one_;
     best_traj->cost_ = 1.0;
 
-    base_local_planner::Trajectory* comp_traj = &traj_one_;
+    base_local_planner::Trajectory* comp_traj = &traj_two_;
     comp_traj->cost_ = 1.0;
-
-    base_local_planner::Trajectory* swap = NULL;
 
     Eigen::Vector3f vel_samp = Eigen::Vector3f::Zero();
 
     //first... we'll make sure to simulate the case where y and th are zero
     vel_samp[0] = min_vel_x_;
     for(unsigned int i = 0; i < vsamples_[0]; ++i){
-      //TODO:simulate
+      //simulate the trajectory and select it if its better
+      generateTrajectory(pos, vel, *comp_traj);
+      selectBestTrajectory(best_traj, comp_traj);
       vel_samp[0] += dv[0];
     }
 
@@ -161,7 +170,9 @@ namespace dwa_local_planner {
           vel_samp[2] = 0.0;
 
         for(unsigned int k = 0; k < vsamples_[2]; ++k){
-          //TODO:simulate
+          //simulate the trajectory and select it if its better
+          generateTrajectory(pos, vel, *comp_traj);
+          selectBestTrajectory(best_traj, comp_traj);
           vel_samp[2] += dv[2];
         }
         vel_samp[1] += dv[1];
