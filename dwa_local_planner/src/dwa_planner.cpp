@@ -71,7 +71,8 @@ namespace dwa_local_planner {
     pn.param("occdist_scale", occdist_scale_, 0.01);
 
     pn.param("stop_time_buffer", stop_time_buffer_, 0.2);
-    pn.param("oscillation_reset_dist", oscillation_reset_dist_, 0.325);
+    pn.param("oscillation_reset_dist", oscillation_reset_dist_, 0.05);
+    pn.param("heading_lookahead", heading_lookahead_, 0.325);
 
     int vx_samp, vy_samp, vth_samp;
     pn.param("vx_samples", vx_samp, 3);
@@ -118,6 +119,30 @@ namespace dwa_local_planner {
       base_local_planner::Trajectory* swap = best;
       best = comp;
       comp = swap;
+    }
+  }
+
+  void DWAPlanner::selectBestTrajectoryInPlaceRot(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp, double& best_heading_dist){
+    //first, check if the trajectory scores comparably well
+    if(comp->cost_ >= 0 && (comp->cost_ <= best->cost_ || best->cost_ < 0)){
+      //next, to differentiate between rotations... we'll look ahead a bit
+      double x_r, y_r, th_r;
+      comp->getEndpoint(x_r, y_r, th_r);
+      x_r += heading_lookahead_ * cos(th_r);
+      y_r += heading_lookahead_ * sin(th_r);
+
+      //get the goal distance of the associated cell
+      unsigned int cell_x, cell_y; 
+      if(costmap_.worldToMap(x_r, y_r, cell_x, cell_y)){
+        double ahead_gdist = map_(cell_x, cell_y).goal_dist;
+        //if this heading looks more promising than the last... take it
+        if(ahead_gdist < best_heading_dist){
+          base_local_planner::Trajectory* swap = best;
+          best = comp;
+          comp = swap;
+          best_heading_dist = ahead_gdist;
+        }
+      }
     }
   }
 
@@ -215,6 +240,8 @@ namespace dwa_local_planner {
       vel_samp[1] = 0.0;
       vel_samp[2] = min_vel_th_;
 
+      double best_heading_gdist = DBL_MAX;
+
       for(unsigned int i = 0; i < vsamples_[2]; ++i){
         //we won't sample trajectories that don't meet the minimum speed requirements
         if(fabs(vel_samp[2]) < min_in_place_vel_th_){
@@ -222,7 +249,18 @@ namespace dwa_local_planner {
           continue;
         }
 
-        //TODO: simulate and make sure to differentiate between rotation scores and check oscillation
+        //we'll only simulate negative rotations if we haven't comitted to positive rotations
+        if(vel_samp[1] < 0 && !rot_pos_only_){
+          //simulate the trajectory and select it if its better
+          generateTrajectory(pos, vel, *comp_traj);
+          selectBestTrajectoryInPlaceRot(best_traj, comp_traj, best_heading_gdist);
+        }
+        //we'll make the inverse check for positive rotations
+        else if(!rot_neg_only_){
+          //simulate the trajectory and select it if its better
+          generateTrajectory(pos, vel, *comp_traj);
+          selectBestTrajectoryInPlaceRot(best_traj, comp_traj, best_heading_gdist);
+        }
       }
     }
 
