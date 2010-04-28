@@ -100,7 +100,7 @@ namespace dwa_local_planner {
       costmap_2d::Costmap2DROS* costmap_ros_;
       costmap_2d::Costmap2D costmap_;
       double stop_time_buffer_;
-      double pdist_scale_, gdist_scale_, occdist_scale_;
+      double pdist_scale_, gdist_scale_, occdist_scale_, heading_scale_;
       Eigen::Vector3f acc_lim_, vsamples_, prev_stationary_pos_;
       std::vector<geometry_msgs::Point> footprint_spec_;
       base_local_planner::CostmapModel* world_model_;

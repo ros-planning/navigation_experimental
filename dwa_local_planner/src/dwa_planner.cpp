@@ -72,6 +72,7 @@ namespace dwa_local_planner {
     pn.param("path_distance_bias", pdist_scale_, 0.6);
     pn.param("goal_distance_bias", gdist_scale_, 0.8);
     pn.param("occdist_scale", occdist_scale_, 0.01);
+    pn.param("heading_scale", heading_scale_, 1.0);
 
     pn.param("stop_time_buffer", stop_time_buffer_, 0.2);
     pn.param("oscillation_reset_dist", oscillation_reset_dist_, 0.05);
@@ -520,7 +521,7 @@ namespace dwa_local_planner {
     //compute the final cost
     //traj.cost_ = gdist_scale_ * normalized_gdist + pdist_scale_ * normalized_pdist + occdist_scale_* normalized_occ_cost; 
     //traj.cost_ = 1.0 * normalized_heading + gdist_scale_ * normalized_gdist; // +   0.2 * normalized_vel + 0.2 * normalized_occ_cost;
-    traj.cost_ = 1.0 * normalized_heading + pdist_scale_ * path_dist + gdist_scale_ * goal_dist + occdist_scale_ * occ_cost;
+    traj.cost_ = heading_scale_ * normalized_heading + pdist_scale_ * path_dist + gdist_scale_ * goal_dist + occdist_scale_ * occ_cost;
     //ROS_ERROR("%.2f, %.2f, %.2f, %.2f", vel[0], vel[1], vel[2], traj.cost_);
   }
 
