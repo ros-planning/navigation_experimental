@@ -15,7 +15,7 @@
   <depend package="nav_core"/>
   <depend package="nav_msgs"/>
   <depend package="eigen" />
-
+  <depend package="base_local_planner" />
 </package>
 
 

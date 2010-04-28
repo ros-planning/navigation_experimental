@@ -37,24 +37,46 @@
 #ifndef DWA_LOCAL_PLANNER_DWA_PLANNER_H_
 #define DWA_LOCAL_PLANNER_DWA_PLANNER_H_
 #include <queue>
+#include <vector>
 #include <Eigen/Core>
+#include <costmap_2d/costmap_2d.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <tf/transform_listener.h>
+#include <base_local_planner/trajectory.h>
+#include <base_local_planner/map_grid.h>
+#include <base_local_planner/costmap_model.h>
 
 namespace dwa_local_planner {
   class DWAPlanner {
     public:
-      DWAPlanner() {}
+      DWAPlanner() : map_(10, 10){}
+
+      ~DWAPlanner() {}
 
       void initialize(std::string name, tf::TransformListener* tf,
           costmap_2d::Costmap2DROS* costmap_ros);
 
       Eigen::Vector3f computeNewPositions(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel, double dt);
+      void generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, base_local_planner::Trajectory& traj);
       
 
     private:
-      void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
+      //void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
+      double footprintCost(const Eigen::Vector3f& pos, double scale);
+
+      inline Eigen::Vector3f getMaxSpeedToStopInTime(double time){
+        return -0.5 * acc_lim_ * std::max(time, 0.0);
+      }
+
+      base_local_planner::MapGrid map_;
+      costmap_2d::Costmap2D costmap_;
+      double stop_time_buffer_;
+      double pdist_scale_, gdist_scale_, occdist_scale_;
+      Eigen::Vector3f acc_lim_;
+      std::vector<geometry_msgs::Point> footprint_spec_;
+      base_local_planner::CostmapModel* world_model_;
+      double sim_time_, sim_granularity_;
   };
 };
 #endif
