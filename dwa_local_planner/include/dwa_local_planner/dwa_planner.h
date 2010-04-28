@@ -67,6 +67,8 @@ namespace dwa_local_planner {
 
       double footprintCost(const Eigen::Vector3f& pos, double scale);
       void selectBestTrajectory(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp);
+      void resetOscillationFlagsIfPossible(const Eigen::Vector3f& pos, const Eigen::Vector3f& prev);
+      void setOscillationFlags(base_local_planner::Trajectory* t);
 
       inline Eigen::Vector3f getMaxSpeedToStopInTime(double time){
         return -0.5 * acc_lim_ * std::max(time, 0.0);
@@ -78,7 +80,7 @@ namespace dwa_local_planner {
       tf::TransformListener* tf_;
       double stop_time_buffer_;
       double pdist_scale_, gdist_scale_, occdist_scale_;
-      Eigen::Vector3f acc_lim_, vsamples_;
+      Eigen::Vector3f acc_lim_, vsamples_, prev_stationary_pos_;
       std::vector<geometry_msgs::Point> footprint_spec_;
       base_local_planner::CostmapModel* world_model_;
       double sim_time_, sim_granularity_;
@@ -87,6 +89,9 @@ namespace dwa_local_planner {
       double max_vel_th_, min_vel_th_, min_in_place_vel_th_;
       double sim_period_;
       base_local_planner::Trajectory traj_one_, traj_two_;
+      bool strafe_pos_only_, strafe_neg_only_, strafing_pos_, strafing_neg_;
+      bool rot_pos_only_, rot_neg_only_, rotating_pos_, rotating_neg_;
+      double oscillation_reset_dist_;
   };
 };
 #endif

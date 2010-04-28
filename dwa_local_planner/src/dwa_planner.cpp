@@ -71,6 +71,7 @@ namespace dwa_local_planner {
     pn.param("occdist_scale", occdist_scale_, 0.01);
 
     pn.param("stop_time_buffer", stop_time_buffer_, 0.2);
+    pn.param("oscillation_reset_dist", oscillation_reset_dist_, 0.325);
 
     int vx_samp, vy_samp, vth_samp;
     pn.param("vx_samples", vx_samp, 3);
@@ -193,7 +194,18 @@ namespace dwa_local_planner {
           continue;
         }
 
-        //TODO:simulate make sure to check for oscillation
+        //we'll only simulate negative strafes if we haven't comitted to positive strafes
+        if(vel_samp[1] < 0 && !strafe_pos_only_){
+          //simulate the trajectory and select it if its better
+          generateTrajectory(pos, vel, *comp_traj);
+          selectBestTrajectory(best_traj, comp_traj);
+        }
+        //we'll make the inverse check for positive strafing
+        else if(!strafe_neg_only_){
+          //simulate the trajectory and select it if its better
+          generateTrajectory(pos, vel, *comp_traj);
+          selectBestTrajectory(best_traj, comp_traj);
+        }
       }
     }
 
@@ -214,6 +226,70 @@ namespace dwa_local_planner {
       }
     }
 
+    //ok... now we have our best trajectory
+    if(best_traj->cost_ >= 0){
+      //we want to check if we need to set any oscillation flags
+      if(best_traj->xv_ <= 0){
+        setOscillationFlags(best_traj);
+        prev_stationary_pos_ = pos;
+      }
+
+      //check if we can reset any oscillation flags
+      resetOscillationFlagsIfPossible(pos, prev_stationary_pos_);
+    }
+
+  }
+
+  void DWAPlanner::resetOscillationFlagsIfPossible(const Eigen::Vector3f& pos, const Eigen::Vector3f& prev){
+    double x_diff = pos[0] - prev[0];
+    double y_diff = pos[1] - prev[1];
+    double sq_dist = x_diff * x_diff + y_diff * y_diff;
+
+    //if we've moved far enough... we can reset our flags
+    if(sq_dist > oscillation_reset_dist_ * oscillation_reset_dist_){
+      strafe_pos_only_ = false;
+      strafe_neg_only_ = false;
+      strafing_pos_ = false;
+      strafing_neg_ = false;
+
+      rot_pos_only_ = false;
+      rot_neg_only_ = false;
+      rotating_pos_ = false;
+      rotating_neg_ = false;
+    }
+  }
+  
+  void DWAPlanner::setOscillationFlags(base_local_planner::Trajectory* t){
+    //we'll only set flags when we're not moving forward at all
+    if(t->xv_ <= 0){
+      //check negative strafe
+      if(t->yv_ < 0){
+        if(strafing_pos_)
+          strafe_neg_only_ = true;
+        strafing_neg_ = true;
+      }
+
+      //check positive strafe
+      if(t->yv_ > 0){
+        if(strafing_neg_)
+          strafe_pos_only_ = true;
+        strafing_pos_ = true;
+      }
+
+      //check negative rotation
+      if(t->thetav_ < 0){
+        if(rotating_pos_)
+          rot_neg_only_ = true;
+        rotating_neg_ = true;
+      }
+
+      //check positive rotation
+      if(t->thetav_ > 0){
+        if(rotating_neg_)
+          rot_pos_only_ = true;
+        rotating_pos_ = true;
+      }
+    }
   }
 
   double DWAPlanner::footprintCost(const Eigen::Vector3f& pos, double scale){
