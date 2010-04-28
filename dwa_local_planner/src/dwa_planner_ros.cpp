@@ -34,8 +34,13 @@
 *
 * Author: Eitan Marder-Eppstein
 *********************************************************************/
+#include <pluginlib/class_list_macros.h>
+
 #include <dwa_local_planner/dwa_planner_ros.h>
 #include <base_local_planner/goal_functions.h>
+
+//register this planner as a BaseLocalPlanner plugin
+PLUGINLIB_DECLARE_CLASS(dwa_local_planner, DWAPlannerROS, dwa_local_planner::DWAPlannerROS, nav_core::BaseLocalPlanner)
 
 namespace dwa_local_planner {
   void DWAPlannerROS::initialize(std::string name, tf::TransformListener* tf,

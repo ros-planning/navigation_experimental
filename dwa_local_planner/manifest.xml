@@ -17,6 +17,10 @@
   <depend package="eigen" />
   <depend package="base_local_planner" />
   <depend package="angles" />
+  <export>
+    <cpp cflags="-I${prefix}/include -I${prefix}/msg/cpp" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -ldwa_local_planner" />
+    <nav_core plugin="${prefix}/blp_plugin.xml" />
+  </export>
 </package>
 
 

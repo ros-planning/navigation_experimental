@@ -39,8 +39,10 @@
 #include <angles/angles.h>
 #include <dwa_local_planner/dwa_planner.h>
 #include <boost/shared_ptr.hpp>
+#include <nav_core/base_local_planner.h>
+
 namespace dwa_local_planner {
-  class DWAPlannerROS {
+  class DWAPlannerROS : public nav_core::BaseLocalPlanner {
     public:
       DWAPlannerROS() : costmap_ros_(NULL), tf_(NULL), initialized_(false) {}
       void initialize(std::string name, tf::TransformListener* tf, costmap_2d::Costmap2DROS* costmap_ros);
