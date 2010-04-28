@@ -37,7 +37,7 @@
 #include <dwa_local_planner/dwa_planner.h>
 
 namespace dwa_local_planner {
-  DWAPlanner::DWAPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros) : costmap_ros_(NULL){
+  DWAPlanner::DWAPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros) : costmap_ros_(NULL), world_model_(NULL) {
     costmap_ros_ = costmap_ros;
     costmap_ros_->getCostmapCopy(costmap_);
 
@@ -54,11 +54,11 @@ namespace dwa_local_planner {
     acc_lim_[1] = acc_lim_y;
     acc_lim_[2] = acc_lim_th;
 
-    pn.param("max_vel_x", max_vel_x_, 0.5);
+    pn.param("max_vel_x", max_vel_x_, 0.6);
     pn.param("min_vel_x", min_vel_x_, 0.1);
 
-    pn.param("max_vel_y", max_vel_x_, 0.2);
-    pn.param("min_vel_y", min_vel_x_, -0.2);
+    pn.param("max_vel_y", max_vel_y_, 0.1);
+    pn.param("min_vel_y", min_vel_y_, -0.1);
     pn.param("min_in_place_strafe_vel", min_in_place_vel_y_, 0.1);
 
     pn.param("max_rotational_vel", max_vel_th_, 1.0);
@@ -107,6 +107,8 @@ namespace dwa_local_planner {
 
     footprint_spec_ = costmap_ros_->getRobotFootprint();
 
+    world_model_ = new base_local_planner::CostmapModel(costmap_);
+
   }
 
   Eigen::Vector3f DWAPlanner::computeNewPositions(const Eigen::Vector3f& pos, 
@@ -118,16 +120,16 @@ namespace dwa_local_planner {
     return new_pos;
   }
   
-  void DWAPlanner::selectBestTrajectory(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp){
+  void DWAPlanner::selectBestTrajectory(base_local_planner::Trajectory* &best, base_local_planner::Trajectory* &comp){
     //check if the comp trajectory is better than the current best and, if so, swap them
-    if(comp->cost_ >= 0 && (comp->cost_ < best->cost_ || best->cost_ < 0)){
+    if(comp->cost_ >= 0.0 && (comp->cost_ < best->cost_ || best->cost_ < 0.0)){
       base_local_planner::Trajectory* swap = best;
       best = comp;
       comp = swap;
     }
   }
 
-  void DWAPlanner::selectBestTrajectoryInPlaceRot(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp, double& best_heading_dist){
+  void DWAPlanner::selectBestTrajectoryInPlaceRot(base_local_planner::Trajectory* &best, base_local_planner::Trajectory* &comp, double& best_heading_dist){
     //first, check if the trajectory scores comparably well
     if(comp->cost_ >= 0 && (comp->cost_ <= best->cost_ || best->cost_ < 0)){
       //next, to differentiate between rotations... we'll look ahead a bit
@@ -168,41 +170,45 @@ namespace dwa_local_planner {
 
     //keep track of the best trajectory seen so far... we'll re-use two memeber vars for efficiency
     base_local_planner::Trajectory* best_traj = &traj_one_;
-    best_traj->cost_ = 1.0;
+    best_traj->cost_ = -1.0;
 
     base_local_planner::Trajectory* comp_traj = &traj_two_;
-    comp_traj->cost_ = 1.0;
+    comp_traj->cost_ = -1.0;
 
     Eigen::Vector3f vel_samp = Eigen::Vector3f::Zero();
 
+    //ROS_ERROR("x(%.2f, %.2f), y(%.2f, %.2f), th(%.2f, %.2f)", min_vel[0], max_vel[0], min_vel[1], max_vel[1], min_vel[2], max_vel[2]);
+    //ROS_ERROR("x(%.2f, %.2f), y(%.2f, %.2f), th(%.2f, %.2f)", min_vel_x_, max_vel_x_, min_vel_y_, max_vel_y_, min_vel_th_, max_vel_th_);
+    //ROS_ERROR("dv %.2f %.2f %.2f", dv[0], dv[1], dv[2]);
+
     //first... we'll make sure to simulate the case where y and th are zero
-    vel_samp[0] = min_vel_x_;
+    vel_samp[0] = min_vel[0];
     for(unsigned int i = 0; i < vsamples_[0]; ++i){
       //simulate the trajectory and select it if its better
-      generateTrajectory(pos, vel, *comp_traj);
+      generateTrajectory(pos, vel_samp, *comp_traj);
       selectBestTrajectory(best_traj, comp_traj);
       vel_samp[0] += dv[0];
     }
 
-    vel_samp[0] = min_vel_x_;
+    vel_samp[0] = min_vel[0];
     //Next, we'll just loop through the trajectories as normal
     for(unsigned int i = 0; i < vsamples_[0]; ++i){
       //we only want to set the y velocity if we're sampling more than one point
       if(vsamples_[1] > 1)
-        vel_samp[1] = min_vel_y_;
+        vel_samp[1] = min_vel[1];
       else
         vel_samp[1] = 0.0;
 
       for(unsigned int j = 0; j < vsamples_[1]; ++j){
         //we only want to set the th velocity if we're sampling more than one point
         if(vsamples_[2] > 1)
-          vel_samp[2] = min_vel_th_;
+          vel_samp[2] = min_vel[2];
         else
           vel_samp[2] = 0.0;
 
         for(unsigned int k = 0; k < vsamples_[2]; ++k){
           //simulate the trajectory and select it if its better
-          generateTrajectory(pos, vel, *comp_traj);
+          generateTrajectory(pos, vel_samp, *comp_traj);
           selectBestTrajectory(best_traj, comp_traj);
           vel_samp[2] += dv[2];
         }
@@ -214,7 +220,7 @@ namespace dwa_local_planner {
     //we want to make sure to simulate strafing without motion in the x direction
     if(vsamples_[1] > 1){
       vel_samp[0] = 0.0;
-      vel_samp[1] = min_vel_y_;
+      vel_samp[1] = min_vel[1];
       vel_samp[2] = 0.0;
 
       for(unsigned int i = 0; i < vsamples_[1]; ++i){
@@ -227,13 +233,13 @@ namespace dwa_local_planner {
         //we'll only simulate negative strafes if we haven't comitted to positive strafes
         if(vel_samp[1] < 0 && !strafe_pos_only_){
           //simulate the trajectory and select it if its better
-          generateTrajectory(pos, vel, *comp_traj);
+          generateTrajectory(pos, vel_samp, *comp_traj);
           selectBestTrajectory(best_traj, comp_traj);
         }
         //we'll make the inverse check for positive strafing
         else if(!strafe_neg_only_){
           //simulate the trajectory and select it if its better
-          generateTrajectory(pos, vel, *comp_traj);
+          generateTrajectory(pos, vel_samp, *comp_traj);
           selectBestTrajectory(best_traj, comp_traj);
         }
       }
@@ -243,7 +249,7 @@ namespace dwa_local_planner {
     if(vsamples_[2] > 1){
       vel_samp[0] = 0.0;
       vel_samp[1] = 0.0;
-      vel_samp[2] = min_vel_th_;
+      vel_samp[2] = min_vel[2];
 
       double best_heading_gdist = DBL_MAX;
 
@@ -257,13 +263,13 @@ namespace dwa_local_planner {
         //we'll only simulate negative rotations if we haven't comitted to positive rotations
         if(vel_samp[1] < 0 && !rot_pos_only_){
           //simulate the trajectory and select it if its better
-          generateTrajectory(pos, vel, *comp_traj);
+          generateTrajectory(pos, vel_samp, *comp_traj);
           selectBestTrajectoryInPlaceRot(best_traj, comp_traj, best_heading_gdist);
         }
         //we'll make the inverse check for positive rotations
         else if(!rot_neg_only_){
           //simulate the trajectory and select it if its better
-          generateTrajectory(pos, vel, *comp_traj);
+          generateTrajectory(pos, vel_samp, *comp_traj);
           selectBestTrajectoryInPlaceRot(best_traj, comp_traj, best_heading_gdist);
         }
       }
@@ -366,13 +372,12 @@ namespace dwa_local_planner {
   }
 
   void DWAPlanner::generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, base_local_planner::Trajectory& traj){
+    //ROS_ERROR("%.2f, %.2f, %.2f - %.2f %.2f", vel[0], vel[1], vel[2], sim_time_, sim_granularity_);
     double impossible_cost = map_.map_.size();
 
     double vmag = sqrt(vel[0] * vel[0] + vel[1] * vel[1]);
 
     //compute the number of steps we must take along this trajectory to be "safe"
-
-    //compute the number of steps we'll take
     int num_steps = ceil(std::max((vmag * sim_time_) / sim_granularity_, fabs(vel[2]) / sim_granularity_));
 
     //compute a timestep
@@ -392,8 +397,9 @@ namespace dwa_local_planner {
     traj.cost_ = -1.0;
 
     //if we're not actualy going to simulate... we may as well just return now
-    if(num_steps == 0)
+    if(num_steps == 0){
       return;
+    }
 
     //we want to check against the absolute value of the velocities for collisions later
     Eigen::Vector3f abs_vel = vel.cwise().abs();
@@ -460,7 +466,8 @@ namespace dwa_local_planner {
     }
 
     //compute the final cost
-    traj.cost_ = pdist_scale_ * path_dist + gdist_scale_ * goal_dist + occdist_scale_ * occ_cost;
+    traj.cost_ = pdist_scale_ * path_dist + gdist_scale_ * goal_dist; //+ occdist_scale_ * occ_cost;
+    //ROS_ERROR("%.2f, %.2f, %.2f, %.2f", vel[0], vel[1], vel[2], traj.cost_);
   }
 
   bool DWAPlanner::checkTrajectory(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel){

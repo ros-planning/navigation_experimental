@@ -54,7 +54,7 @@ namespace dwa_local_planner {
     public:
       DWAPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
 
-      ~DWAPlanner() {}
+      ~DWAPlanner() {delete world_model_;}
 
       Eigen::Vector3f computeNewPositions(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel, double dt);
       void generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, base_local_planner::Trajectory& traj);
@@ -67,8 +67,8 @@ namespace dwa_local_planner {
 
     private:
       double footprintCost(const Eigen::Vector3f& pos, double scale);
-      void selectBestTrajectory(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp);
-      void selectBestTrajectoryInPlaceRot(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp, double& best_heading_dist);
+      void selectBestTrajectory(base_local_planner::Trajectory* &best, base_local_planner::Trajectory* &comp);
+      void selectBestTrajectoryInPlaceRot(base_local_planner::Trajectory* &best, base_local_planner::Trajectory* &comp, double& best_heading_dist);
       void resetOscillationFlags();
       void resetOscillationFlagsIfPossible(const Eigen::Vector3f& pos, const Eigen::Vector3f& prev);
       void setOscillationFlags(base_local_planner::Trajectory* t);
