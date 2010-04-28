@@ -45,12 +45,14 @@
 #include <base_local_planner/trajectory.h>
 #include <base_local_planner/map_grid.h>
 #include <base_local_planner/costmap_model.h>
+#include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
 #include <ros/ros.h>
 
 namespace dwa_local_planner {
   class DWAPlanner {
     public:
-      DWAPlanner() : map_(10, 10){}
+      DWAPlanner();
 
       ~DWAPlanner() {}
 
@@ -63,7 +65,7 @@ namespace dwa_local_planner {
       
 
     private:
-      //void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
+      void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){}
 
       double footprintCost(const Eigen::Vector3f& pos, double scale);
       void selectBestTrajectory(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp);
@@ -96,6 +98,12 @@ namespace dwa_local_planner {
       double oscillation_reset_dist_;
       double heading_lookahead_;
       double scaling_speed_, max_scaling_factor_;
+      double rot_stopped_vel_, trans_stopped_vel_;
+      double yaw_goal_tolerance_, xy_goal_tolerance_;
+      bool prune_plan_;
+      bool initialized_;
+      ros::Subscriber odom_sub_;
+      ros::Publisher g_plan_pub_, l_plan_pub_;
   };
 };
 #endif
