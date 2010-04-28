@@ -74,6 +74,9 @@ namespace dwa_local_planner {
     pn.param("oscillation_reset_dist", oscillation_reset_dist_, 0.05);
     pn.param("heading_lookahead", heading_lookahead_, 0.325);
 
+    pn.param("scaling_speed", scaling_speed_, 0.5);
+    pn.param("max_scaling_factor", max_scaling_factor_, 0.5);
+
     int vx_samp, vy_samp, vth_samp;
     pn.param("vx_samples", vx_samp, 3);
     pn.param("vy_samples", vy_samp, 3);
@@ -285,16 +288,20 @@ namespace dwa_local_planner {
 
     //if we've moved far enough... we can reset our flags
     if(sq_dist > oscillation_reset_dist_ * oscillation_reset_dist_){
-      strafe_pos_only_ = false;
-      strafe_neg_only_ = false;
-      strafing_pos_ = false;
-      strafing_neg_ = false;
-
-      rot_pos_only_ = false;
-      rot_neg_only_ = false;
-      rotating_pos_ = false;
-      rotating_neg_ = false;
+      resetOscillationFlags();
     }
+  }
+
+  void DWAPlanner::resetOscillationFlags(){
+    strafe_pos_only_ = false;
+    strafe_neg_only_ = false;
+    strafing_pos_ = false;
+    strafing_neg_ = false;
+
+    rot_pos_only_ = false;
+    rot_neg_only_ = false;
+    rotating_pos_ = false;
+    rotating_neg_ = false;
   }
   
   void DWAPlanner::setOscillationFlags(base_local_planner::Trajectory* t){
@@ -397,8 +404,14 @@ namespace dwa_local_planner {
         return;
       }
 
-      //TODO:Compute scale properly
+      //if we're over a certain speed threshold, we'll scale the robot's
+      //footprint to make it either slow down or stay further from walls
       double scale = 1.0;
+      if(vel[0] > scaling_speed_){
+        //scale up to the max scaling factor linearly... this could be changed later
+        double ratio = (vel[0] - scaling_speed_) / (max_vel_x_ - scaling_speed_);
+        scale = max_scaling_factor_ * ratio + 1.0;
+      }
 
       //we want to find the cost of the footprint
       double footprint_cost = footprintCost(pos, scale);

@@ -68,6 +68,7 @@ namespace dwa_local_planner {
       double footprintCost(const Eigen::Vector3f& pos, double scale);
       void selectBestTrajectory(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp);
       void selectBestTrajectoryInPlaceRot(base_local_planner::Trajectory* best, base_local_planner::Trajectory* comp, double& best_heading_dist);
+      void resetOscillationFlags();
       void resetOscillationFlagsIfPossible(const Eigen::Vector3f& pos, const Eigen::Vector3f& prev);
       void setOscillationFlags(base_local_planner::Trajectory* t);
 
@@ -94,6 +95,7 @@ namespace dwa_local_planner {
       bool rot_pos_only_, rot_neg_only_, rotating_pos_, rotating_neg_;
       double oscillation_reset_dist_;
       double heading_lookahead_;
+      double scaling_speed_, max_scaling_factor_;
   };
 };
 #endif
