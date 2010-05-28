@@ -51,7 +51,12 @@ namespace dwa_local_planner {
       bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel);
 
     private:
+      inline double sign(double x){
+        return x < 0.0 ? -1.0 : 1.0;
+      }
+
       bool rotateToGoal(const tf::Stamped<tf::Pose>& global_pose, const tf::Stamped<tf::Pose>& robot_vel, double goal_th, geometry_msgs::Twist& cmd_vel);
+      bool stopWithAccLimits(const tf::Stamped<tf::Pose>& global_pose, const tf::Stamped<tf::Pose>& robot_vel, geometry_msgs::Twist& cmd_vel);
       void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
       costmap_2d::Costmap2DROS* costmap_ros_;
@@ -67,6 +72,7 @@ namespace dwa_local_planner {
       nav_msgs::Odometry base_odom_;
       boost::shared_ptr<DWAPlanner> dp_;
       std::vector<geometry_msgs::PoseStamped> global_plan_;
+      bool rotating_to_goal_;
   };
 };
 #endif

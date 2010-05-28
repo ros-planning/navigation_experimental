@@ -63,6 +63,8 @@ namespace dwa_local_planner {
       base_local_planner::Trajectory findBestPath(tf::Stamped<tf::Pose> global_pose, tf::Stamped<tf::Pose> global_vel, 
           tf::Stamped<tf::Pose>& drive_velocities);
       void updatePlan(const std::vector<geometry_msgs::PoseStamped>& new_plan);
+      Eigen::Vector3f getAccLimits() { return acc_lim_; }
+      double getSimPeriod() { return sim_period_; }
       
 
     private:
