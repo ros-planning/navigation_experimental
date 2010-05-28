@@ -15,7 +15,7 @@ anti_collision_base_controller:
   min_in_place_vel_th: 0.25
   xy_goal_tolerance: 0.08
   yaw_goal_tolerance: 0.02
-  acc_limit_th: 3.2
-  acc_limit_x: 2.5
-  acc_limit_y: 2.5
+  acc_lim_th: 3.2
+  acc_lim_x: 2.5
+  acc_lim_y: 2.5
   
