@@ -108,7 +108,7 @@ namespace dwa_local_planner {
       base_local_planner::CostmapModel* world_model_;
       double sim_time_, sim_granularity_;
       double max_vel_x_, min_vel_x_;
-      double max_vel_y_, min_vel_y_, min_in_place_vel_y_;
+      double max_vel_y_, min_vel_y_, min_vel_trans_;
       double max_vel_th_, min_vel_th_, min_in_place_vel_th_;
       double sim_period_;
       base_local_planner::Trajectory traj_one_, traj_two_;

@@ -60,7 +60,8 @@ namespace dwa_local_planner {
 
     pn.param("max_vel_y", max_vel_y_, 0.1);
     pn.param("min_vel_y", min_vel_y_, -0.1);
-    pn.param("min_in_place_strafe_vel", min_in_place_vel_y_, 0.1);
+
+    pn.param("min_trans_vel", min_vel_trans_, 0.1);
 
     pn.param("max_rotational_vel", max_vel_th_, 1.0);
     min_vel_th_ = -1.0 * max_vel_th_;
@@ -203,6 +204,12 @@ namespace dwa_local_planner {
     //first... we'll make sure to simulate the case where y and th are zero
     vel_samp[0] = min_vel[0];
     for(unsigned int i = 0; i < vsamples_[0]; ++i){
+      //we won't sample trajectories that don't meet the minimum speed requirements
+      if(fabs(vel_samp[0]) < min_vel_trans_){
+        vel_samp[0] += dv[0];
+        continue;
+      }
+
       //simulate the trajectory and select it if its better
       generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
       selectBestTrajectory(best_traj, comp_traj);
@@ -236,6 +243,13 @@ namespace dwa_local_planner {
         vel_samp[1] = 0.0;
 
       for(unsigned int j = 0; j < vsamples_[1]; ++j){
+        //we won't sample trajectories that don't meet the minimum translational speed requirements
+        double vel_sq = vel_samp[0] * vel_samp[0] + vel_samp[1] * vel_samp[1];
+        if(fabs(vel_samp[0]) < min_vel_trans_){
+          vel_samp[0] += local_dy;
+          continue;
+        }
+
         //we only want to set the th velocity if we're sampling more than one point
         if(vsamples_[2] > 1)
           vel_samp[2] = min_vel[2];
@@ -261,7 +275,7 @@ namespace dwa_local_planner {
 
       for(unsigned int i = 0; i < vsamples_[1]; ++i){
         //we won't sample trajectories that don't meet the minimum speed requirements
-        if(fabs(vel_samp[1]) < min_in_place_vel_y_){
+        if(fabs(vel_samp[1]) < min_vel_trans_){
           vel_samp[1] += dv[1];
           continue;
         }
@@ -278,6 +292,7 @@ namespace dwa_local_planner {
           generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
           selectBestTrajectory(best_traj, comp_traj);
         }
+        vel_samp[1] += dv[1];
       }
     }
 
@@ -308,6 +323,7 @@ namespace dwa_local_planner {
           generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
           selectBestTrajectoryInPlaceRot(best_traj, comp_traj, best_heading_gdist);
         }
+        vel_samp[2] += dv[2];
       }
     }
 
