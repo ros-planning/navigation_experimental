@@ -40,7 +40,7 @@ namespace assisted_teleop {
   AssistedTeleop::AssistedTeleop() : costmap_ros_("costmap", tf_), planning_thread_(NULL){
     ros::NodeHandle private_nh("~");
     private_nh.param("controller_frequency", controller_frequency_, 10.0);
-    private_nh.param("num_th_samples", num_th_samples_, 10);
+    private_nh.param("num_th_samples", num_th_samples_, 40);
     private_nh.param("num_x_samples", num_x_samples_, 10);
     private_nh.param("theta_range", theta_range_, 0.70);
     planner_.initialize("planner", &tf_, &costmap_ros_);
@@ -90,6 +90,7 @@ namespace assisted_teleop {
 
       double dth = (theta_range_) / double(num_th_samples_);
       double dx = desired_vel[0] / double(num_x_samples_);
+      double start_th = desired_vel[2] - theta_range_ / 2.0 ;
 
       Eigen::Vector3f best = Eigen::Vector3f::Zero();
       double best_dist = DBL_MAX;
@@ -99,13 +100,13 @@ namespace assisted_teleop {
         Eigen::Vector3f check_vel = Eigen::Vector3f::Zero();
         check_vel[0] = desired_vel[0] - i * dx;
         check_vel[1] = desired_vel[1];
-        check_vel[2] = desired_vel[2] - theta_range_ / 2.0;
+        check_vel[2] = start_th;
         for(int j = 0; j < num_th_samples_; ++j){
-          check_vel[2] = desired_vel[2] + j * dth;
+          check_vel[2] = start_th + j * dth;
           if(planner_.checkTrajectory(check_vel[0], check_vel[1], check_vel[2], false)){
             //if we have a legal trajectory, we'll score it based on its distance to our desired velocity
             Eigen::Vector3f diffs = (desired_vel - check_vel);
-            double sq_dist = diffs[0] * diffs[0] + diffs[1] * diffs[1] + diffs[2] * diffs[2];
+            double sq_dist = diffs[0] * diffs[0];// + diffs[1] * diffs[1] + diffs[2] * diffs[2];
 
             //if we have a trajectory that is better than our best one so far, we'll take it
             if(sq_dist < best_dist){
