@@ -1,0 +1,14 @@
+costmap:
+  unknown_threshold: 16
+  publish_voxel_map: true
+  global_frame: odom_combined
+  robot_base_frame: base_footprint
+  update_frequency: 5.0
+  publish_frequency: 2.0
+  static_map: false
+  rolling_window: true
+  width: 6.0
+  height: 6.0
+  resolution: 0.025
+  origin_x: 0.0
+  origin_y: 0.0
