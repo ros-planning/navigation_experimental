@@ -34,3 +34,5 @@ rosbuild_add_library(trajectory src/trajectory.cpp)
 rosbuild_add_executable(anti_collision_base_controller src/anti_collision_base_controller.cpp)
 target_link_libraries(anti_collision_base_controller trajectory)
 
+rosbuild_add_executable(assisted_teleop src/assisted_teleop.cpp)
+
