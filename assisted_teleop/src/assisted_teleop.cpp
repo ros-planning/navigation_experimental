@@ -44,7 +44,6 @@ namespace assisted_teleop {
     private_nh.param("num_x_samples", num_x_samples_, 10);
     private_nh.param("theta_range", theta_range_, 0.70);
     planner_.initialize("planner", &tf_, &costmap_ros_);
-    planning_thread_ = new boost::thread(boost::bind(&AssistedTeleop::controlLoop, this));
 
     ros::NodeHandle n;
     sub_ = n.subscribe("teleop_cmd_vel", 10, &AssistedTeleop::velCB, this);
@@ -52,6 +51,8 @@ namespace assisted_teleop {
     cmd_vel_.linear.x = 0.0;
     cmd_vel_.linear.y = 0.0;
     cmd_vel_.linear.z = 0.0;
+
+    planning_thread_ = new boost::thread(boost::bind(&AssistedTeleop::controlLoop, this));
   }
 
   AssistedTeleop::~AssistedTeleop(){
