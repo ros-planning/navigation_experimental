@@ -40,8 +40,18 @@ namespace assisted_teleop {
   AssistedTeleop::AssistedTeleop() : costmap_ros_("costmap", tf_), planning_thread_(NULL){
     ros::NodeHandle private_nh("~");
     private_nh.param("controller_frequency", controller_frequency_, 10.0);
-    planner_ = boost::shared_ptr<dwa_local_planner::DWAPlanner>(new dwa_local_planner::DWAPlanner("planner", &costmap_ros_));
+    private_nh.param("num_th_samples", num_th_samples_, 10);
+    private_nh.param("num_x_samples", num_x_samples_, 10);
+    private_nh.param("theta_range", theta_range_, 0.35);
+    planner_.initialize("planner", &tf_, &costmap_ros_);
     planning_thread_ = new boost::thread(boost::bind(&AssistedTeleop::controlLoop, this));
+
+    ros::NodeHandle n;
+    sub_ = n.subscribe("teleop_cmd_vel", 10, &AssistedTeleop::velCB, this);
+    pub_ = n.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+    cmd_vel_.linear.x = 0.0;
+    cmd_vel_.linear.y = 0.0;
+    cmd_vel_.linear.z = 0.0;
   }
 
   AssistedTeleop::~AssistedTeleop(){
@@ -50,23 +60,67 @@ namespace assisted_teleop {
   }
 
   void AssistedTeleop::velCB(const geometry_msgs::TwistConstPtr& vel){
-    boost::mutex::scoped_lock(mutex_);
+    boost::mutex::scoped_lock lock(mutex_);
     cmd_vel_ = *vel;
-  }
-
-  void AssistedTeleop::odomCB(const nav_msgs::OdometryConstPtr& odom){
-    boost::mutex::scoped_lock(mutex_);
-    base_odom_ = *odom;
   }
 
   void AssistedTeleop::controlLoop(){
     ros::Rate r(controller_frequency_);
     while(ros::ok()){
-      tf::Stamped<tf::Pose> global_pose;
-      if(costmap_ros_.getRobotPose(global_pose)){
-        //we'll make sure to clear the footprint of the robot of obstacle
-        costmap_ros_.clearRobotFootprint();
+      Eigen::Vector3f desired_vel = Eigen::Vector3f::Zero();
+
+      //we'll copy over odometry and velocity data for planning
+      {
+        boost::mutex::scoped_lock lock(mutex_);
+        desired_vel[0] = cmd_vel_.linear.x;
+        desired_vel[1] = cmd_vel_.linear.y;
+        desired_vel[2] = cmd_vel_.angular.z;
       }
+
+      //first, we'll check the trajectory that the user sent in... if its legal... we'll just follow it
+      if(planner_.checkTrajectory(desired_vel[0], desired_vel[1], desired_vel[2], true)){
+        geometry_msgs::Twist cmd;
+        cmd.linear.x = desired_vel[0];
+        cmd.linear.y = desired_vel[1];
+        cmd.angular.z = desired_vel[2];
+        pub_.publish(cmd);
+        continue;
+      }
+
+      double dth = (theta_range_) / double(num_th_samples_);
+      double dx = desired_vel[0] / double(num_x_samples_);
+
+      Eigen::Vector3f best = Eigen::Vector3f::Zero();
+      double best_dist = DBL_MAX;
+
+      //if we don't have a valid trajectory... we'll start checking others in the angular range specified
+      for(int i = 0; i < num_x_samples_; ++i){
+        Eigen::Vector3f check_vel = Eigen::Vector3f::Zero();
+        check_vel[0] = desired_vel[0] - i * dx;
+        check_vel[1] = desired_vel[1];
+        check_vel[2] = desired_vel[2] - theta_range_ / 2.0;
+        for(int j = 0; j < num_th_samples_; ++j){
+          check_vel[2] = desired_vel[2] + j * dth;
+          if(planner_.checkTrajectory(check_vel[0], check_vel[1], check_vel[2], false)){
+            //if we have a legal trajectory, we'll score it based on its distance to our desired velocity
+            Eigen::Vector3f diffs = (desired_vel - check_vel);
+            double sq_dist = diffs[0] * diffs[0] + diffs[1] * diffs[1] + diffs[2] * diffs[2];
+
+            //if we have a trajectory that is better than our best one so far, we'll take it
+            if(sq_dist < best_dist){
+              best = check_vel;
+              best_dist = sq_dist;
+            }
+          }
+        }
+      }
+
+      geometry_msgs::Twist best_cmd;
+      best_cmd.linear.x = best[0];
+      best_cmd.linear.y = best[1];
+      best_cmd.angular.z = best[2];
+      pub_.publish(best_cmd);
+
       r.sleep();
     }
   }
