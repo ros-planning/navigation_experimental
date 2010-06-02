@@ -1,0 +1,43 @@
+footprint: [[-0.325, -0.325], [-0.325, 0.325], [0.325, 0.325], [0.325, -0.325]]
+
+planner:
+  transform_tolerance: 0.2
+  costmap_visualization_rate: 0.0
+  world_model: costmap
+  sim_time: 1.5
+  sim_granularity: 0.025
+  vx_samples: 3
+  vtheta_samples: 20
+  max_vel_x: 0.45
+  min_vel_x: 0.05
+  max_vel_th: 1.0
+  min_vel_th: -1.0
+  min_in_place_vel_th: 0.25
+  xy_goal_tolerance: 0.08
+  yaw_goal_tolerance: 0.02
+  acc_lim_th: 3.2
+  acc_lim_x: 2.5
+  acc_lim_y: 2.5
+  
+costmap:
+  publish_voxel_map: true
+  global_frame: odom
+  robot_base_frame: base_link
+  update_frequency: 5.0
+  publish_frequency: 2.0
+  static_map: false
+  rolling_window: true
+  width: 10.0
+  height: 10.0
+  resolution: 0.025
+  origin_x: -5.0
+  origin_y: -5.0
+
+  obstacle_range: 2.5
+  max_obstacle_height: 2.0
+  raytrace_range: 3.0
+
+  observation_sources: base_scan
+  base_scan: {data_type: LaserScan, expected_update_rate: 0.4,
+    observation_persistence: 0.0, marking: true, clearing: true, max_obstacle_height: 0.4, min_obstacle_height: 0.08}
+
