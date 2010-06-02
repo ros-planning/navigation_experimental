@@ -42,7 +42,7 @@ namespace assisted_teleop {
     private_nh.param("controller_frequency", controller_frequency_, 10.0);
     private_nh.param("num_th_samples", num_th_samples_, 10);
     private_nh.param("num_x_samples", num_x_samples_, 10);
-    private_nh.param("theta_range", theta_range_, 0.35);
+    private_nh.param("theta_range", theta_range_, 0.70);
     planner_.initialize("planner", &tf_, &costmap_ros_);
     planning_thread_ = new boost::thread(boost::bind(&AssistedTeleop::controlLoop, this));
 
