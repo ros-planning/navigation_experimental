@@ -1,5 +1,8 @@
 <library path="lib/liblaser_scan_filters">
+  <!--
   <class name="assisted_teleop/LaserScanMaxRangeFilter" type="assisted_teleop::LaserScanMaxRangeFilter" base_class_type="filters::FilterBase<sensor_msgs::LaserScan>">
+   -->
+  <class name="LaserScanMaxRangeFilter" type="assisted_teleop::LaserScanMaxRangeFilter" base_class_type="filters::FilterBase<sensor_msgs::LaserScan>">
     <description>
       A filter that takes max range values in a scan and turns them into valid values that are slightly less than max range.
     </description>
