@@ -36,3 +36,5 @@ target_link_libraries(anti_collision_base_controller trajectory)
 
 rosbuild_add_executable(assisted_teleop src/assisted_teleop.cpp)
 
+rosbuild_add_library(laser_scan_filters src/laser_scan_filters.cpp)
+

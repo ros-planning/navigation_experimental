@@ -1,4 +1,11 @@
 <launch>
+  <!-- We want max range values to be valid for clearing -->
+  <node pkg="laser_filters" type="scan_to_scan_filter_chain" output="screen" name="max_range_laser_filter">
+    <remap from="scan" to="base_scan" />
+    <remap from="scan_filtered" to="base_scan_clearing" />
+    <rosparam command="load" file="$(find assisted_teleop)/launch/max_range_filter.yaml" />
+  </node>
+
   <!-- Throttle the voxel grid that is being published for rviz -->
   <node ns="assisted_teleop/costmap" name="voxel_grid_throttle" pkg="topic_tools" type="throttle" args="messages voxel_grid 3.0 voxel_grid_throttled" />
 

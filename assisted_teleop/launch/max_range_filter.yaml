@@ -1,0 +1,3 @@
+scan_filter_chain:
+- name: max_range_filter
+  type: assisted_teleop/LaserScanMaxRangeFilter
