@@ -13,6 +13,8 @@
     <remap from="odom" to="texas_odometry/odom" />
     <remap from="teleop_cmd_vel" to="cmd_vel" />
     <remap from="cmd_vel" to="assisted_cmd_vel" />
+    <param name="num_x_samples" value="10" />
+    <param name="num_th_samples" value="20" />
 
     <!-- Load common configuration files -->
     <rosparam file="$(find assisted_teleop)/launch/texas_costmap_params.yaml" command="load" ns="costmap" />

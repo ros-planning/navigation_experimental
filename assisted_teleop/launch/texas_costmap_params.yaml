@@ -1,4 +1,4 @@
-footprint: [[0.18, 0.19], [0.18, -0.19], [-0.40, -0.19], [-0.40, 0.19]]
+footprint: [[0.16, -0.195], [-0.08, -0.195], [-0.18, -0.1525], [-0.25, -0.115], [-0.375, -0.115], [-0.375, 0.115], [-0.25, 0.115], [-0.18, 0.1525], [-0.08, 0.195], [0.16, 0.195], [0.18, 0.0]]
 
 #BEGIN VOXEL STUFF
 map_type: voxel
@@ -22,9 +22,9 @@ update_frequency: 5.0
 publish_frequency: 2.0
 static_map: false
 rolling_window: true
-width: 6.0
-height: 6.0
-resolution: 0.025
+width: 10.0
+height: 10.0
+resolution: 0.05
 origin_x: 0.0
 origin_y: 0.0
 

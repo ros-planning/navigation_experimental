@@ -59,7 +59,7 @@ namespace assisted_teleop
         for(unsigned int i = 0; i < filtered_scan.ranges.size(); ++i)
         {
           //set to just below max range if its greater than max range
-          if(filtered_scan.ranges[i] >= filtered_scan.range_max)
+          if(filtered_scan.ranges[i] >= filtered_scan.range_max || filtered_scan.ranges[i] <= filtered_scan.range_min)
             filtered_scan.ranges[i] = filtered_scan.range_max - 1e-4;
         }
 
