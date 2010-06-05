@@ -1,5 +1,6 @@
 <launch>
 
+  <!-- EXAMPLE NODES IN COMMENTS MAY NOT EXIST
   <node pkg="joy" type="joy" name="joystick">
     <param name="dev" type="string" value="/dev/input/js0" />
     <param name="deadzone" value="0.12" />
@@ -10,14 +11,12 @@
   <node pkg="pr2_teleop" type="teleop_pr2" name="pr2_teleop" output="screen">
     <remap from="cmd_vel" to="teleop_cmd_vel" />
 
-    <!-- Axes -->
     <param name="axis_vx" value="3" type="int"/>
     <param name="axis_vy" value="2" type="int"/>
     <param name="axis_vw" value="0" type="int"/>
     <param name="axis_pan" value="0" type="int"/>
     <param name="axis_tilt" value="3" type="int"/>
 
-    <!-- Base velocities -->
     <param name="max_vw" value="0.8" />
     <param name="max_vx" value="0.5" />
     <param name="max_vy" value="0.5" />
@@ -25,15 +24,12 @@
     <param name="max_vx_run" value="1.0" />
     <param name="max_vy_run" value="1.0" />
  
-    <!-- Head -->
     <param name="max_pan" value="2.7" />
     <param name="max_tilt" value="1.4" />
     <param name="min_tilt" value="-0.4" />
     <param name="tilt_step" value="0.3" />
     <param name="pan_step" value="0.3" />
 
-    <!-- Buttons have changed for PS3 controller mapping -->
-    <!-- With joystick remapper, this works with all joysticks on "/joy" -->
     <param name="run_button" value="11" type="int" />
     <param name="torso_dn_button" value="14" type="int" />
     <param name="torso_up_button" value="12" type="int" />
@@ -41,6 +37,7 @@
     <param name="deadman_button" value="10" type="int"/>
 
   </node>
+  -->
 
   <node pkg="assisted_teleop" name="assisted_teleop" type="assisted_teleop" respawn="false" output="screen">
     <rosparam file="$(find assisted_teleop)/launch/assisted_teleop.yaml" command="load" />
