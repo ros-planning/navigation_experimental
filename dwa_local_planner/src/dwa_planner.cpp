@@ -113,6 +113,9 @@ namespace dwa_local_planner {
 
     world_model_ = new base_local_planner::CostmapModel(costmap_);
 
+    prev_stationary_pos_ = Eigen::Vector3f::Zero();
+    resetOscillationFlags();
+
   }
 
   Eigen::Vector3f DWAPlanner::computeNewPositions(const Eigen::Vector3f& pos, 
@@ -211,58 +214,63 @@ namespace dwa_local_planner {
       }
 
       //simulate the trajectory and select it if its better
-      generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
-      selectBestTrajectory(best_traj, comp_traj);
-      vel_samp[0] += dv[0];
+      if((vel_samp[0] < 0 && !forward_pos_only_) || (vel_samp[0] > 0 && !forward_neg_only_)){
+        generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
+        selectBestTrajectory(best_traj, comp_traj);
+        vel_samp[0] += dv[0];
+      }
     }
 
     vel_samp[0] = min_vel[0];
     //Next, we'll just loop through the trajectories as normal
     for(unsigned int i = 0; i < vsamples_[0]; ++i){
-      //we only want to set the y velocity if we're sampling more than one point
-      double local_dy = dv[1];
-      if(vsamples_[1] > 1){
-        //we want to limit our y velocity further based on the x speed we're sampling
-        //this will keep the robot from selecting a x/y velocity pair that makes the 
-        //robot go sideways towards the goal as the desired trajectory
+      //we only want to sample x velocities that are legal given our oscillation flags
+      if((vel_samp[0] < 0 && !forward_pos_only_) || (vel_samp[0] > 0 && !forward_neg_only_)){
+        //we only want to set the y velocity if we're sampling more than one point
+        double local_dy = dv[1];
+        if(vsamples_[1] > 1){
+          //we want to limit our y velocity further based on the x speed we're sampling
+          //this will keep the robot from selecting a x/y velocity pair that makes the 
+          //robot go sideways towards the goal as the desired trajectory
 
-        //we'll define an ellipse centered at 0... going to the maximum x and y speeds respectively
-        //double abs_limited_y = yFromElipse(max_vel[0], max_vel[1], vel_samp[0]);
-        double abs_limited_y = yFromElipse(max_vel_x_, max_vel_y_, vel_samp[0]);
+          //we'll define an ellipse centered at 0... going to the maximum x and y speeds respectively
+          //double abs_limited_y = yFromElipse(max_vel[0], max_vel[1], vel_samp[0]);
+          double abs_limited_y = yFromElipse(max_vel_x_, max_vel_y_, vel_samp[0]);
 
-        //we'll bound the minimum and maximum velocities and compute a step
-        double local_y_min = std::max(-1.0 * abs_limited_y, (double)min_vel[1]);
-        double local_y_max = std::min(abs_limited_y, (double)max_vel[1]);
-        local_dy  = (local_y_max - local_y_min) / (vsamples_[1] - 1);
+          //we'll bound the minimum and maximum velocities and compute a step
+          double local_y_min = std::max(-1.0 * abs_limited_y, (double)min_vel[1]);
+          double local_y_max = std::min(abs_limited_y, (double)max_vel[1]);
+          local_dy  = (local_y_max - local_y_min) / (vsamples_[1] - 1);
 
-        vel_samp[1] = local_y_min;
+          vel_samp[1] = local_y_min;
 
-        //ROS_ERROR("%.2f: %.2f, %.2f, %.2f -- %.2f", vel_samp[0], local_y_min, local_y_max, local_dy, abs_limited_y);
-      }
-      else
-        vel_samp[1] = 0.0;
-
-      for(unsigned int j = 0; j < vsamples_[1]; ++j){
-        //we won't sample trajectories that don't meet the minimum translational speed requirements
-        double vel_sq = vel_samp[0] * vel_samp[0] + vel_samp[1] * vel_samp[1];
-        if(fabs(vel_samp[0]) < min_vel_trans_){
-          vel_samp[0] += local_dy;
-          continue;
+          //ROS_ERROR("%.2f: %.2f, %.2f, %.2f -- %.2f", vel_samp[0], local_y_min, local_y_max, local_dy, abs_limited_y);
         }
-
-        //we only want to set the th velocity if we're sampling more than one point
-        if(vsamples_[2] > 1)
-          vel_samp[2] = min_vel[2];
         else
-          vel_samp[2] = 0.0;
+          vel_samp[1] = 0.0;
 
-        for(unsigned int k = 0; k < vsamples_[2]; ++k){
-          //simulate the trajectory and select it if its better
-          generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
-          selectBestTrajectory(best_traj, comp_traj);
-          vel_samp[2] += dv[2];
+        for(unsigned int j = 0; j < vsamples_[1]; ++j){
+          //we won't sample trajectories that don't meet the minimum translational speed requirements
+          double vel_sq = vel_samp[0] * vel_samp[0] + vel_samp[1] * vel_samp[1];
+          if(fabs(vel_samp[0]) < min_vel_trans_){
+            vel_samp[0] += local_dy;
+            continue;
+          }
+
+          //we only want to set the th velocity if we're sampling more than one point
+          if(vsamples_[2] > 1)
+            vel_samp[2] = min_vel[2];
+          else
+            vel_samp[2] = 0.0;
+
+          for(unsigned int k = 0; k < vsamples_[2]; ++k){
+            //simulate the trajectory and select it if its better
+            generateTrajectory(pos, vel_samp, heading_pose, *comp_traj);
+            selectBestTrajectory(best_traj, comp_traj);
+            vel_samp[2] += dv[2];
+          }
+          vel_samp[1] += local_dy;
         }
-        vel_samp[1] += local_dy;
       }
       vel_samp[0] += dv[0];
     }
@@ -330,13 +338,16 @@ namespace dwa_local_planner {
     //ok... now we have our best trajectory
     if(best_traj->cost_ >= 0){
       //we want to check if we need to set any oscillation flags
-      if(best_traj->xv_ <= 0){
-        setOscillationFlags(best_traj);
+      if(setOscillationFlags(best_traj)){
         prev_stationary_pos_ = pos;
       }
 
-      //check if we can reset any oscillation flags
-      resetOscillationFlagsIfPossible(pos, prev_stationary_pos_);
+      //if we've got restrictions... check if we can reset any oscillation flags
+      if(forward_pos_only_ || forward_neg_only_ 
+         || strafe_pos_only_ || strafe_neg_only_
+	 || rot_pos_only_ || rot_neg_only_){
+        resetOscillationFlagsIfPossible(pos, prev_stationary_pos_);
+      }
     }
 
     //TODO: Think about whether we want to try to do things like back up when a valid trajectory is not found
@@ -366,39 +377,76 @@ namespace dwa_local_planner {
     rot_neg_only_ = false;
     rotating_pos_ = false;
     rotating_neg_ = false;
+
+    forward_pos_only_ = false;
+    forward_neg_only_ = false;
+    forward_pos_ = false;
+    forward_neg_ = false;
   }
   
-  void DWAPlanner::setOscillationFlags(base_local_planner::Trajectory* t){
-    //we'll only set flags when we're not moving forward at all
-    if(t->xv_ <= 0){
+  bool DWAPlanner::setOscillationFlags(base_local_planner::Trajectory* t){
+    bool flag_set = false;
+    //set oscillation flags for moving forward and backward
+    if(t->xv_ < 0.0){
+      if(forward_pos_){
+        forward_neg_only_ = true;
+	flag_set = true;
+      }
+      forward_pos_ = false;
+      forward_neg_ = true;
+    }
+    if(t->xv_ > 0.0){
+      if(forward_neg_){
+        forward_pos_only_ = true;
+	flag_set = true;
+      }
+      forward_neg_ = false;
+      forward_pos_ = true;
+    }
+
+    //we'll only set flags for strafing and rotating when we're not moving forward at all
+    if(fabs(t->xv_) <= min_vel_trans_){
       //check negative strafe
       if(t->yv_ < 0){
-        if(strafing_pos_)
+        if(strafing_pos_){
           strafe_neg_only_ = true;
+	  flag_set = true;
+	}
+        strafing_pos_ = false;
         strafing_neg_ = true;
       }
 
       //check positive strafe
       if(t->yv_ > 0){
-        if(strafing_neg_)
+        if(strafing_neg_){
           strafe_pos_only_ = true;
+	  flag_set = true;
+	}
+        strafing_neg_ = false;
         strafing_pos_ = true;
       }
 
       //check negative rotation
       if(t->thetav_ < 0){
-        if(rotating_pos_)
+        if(rotating_pos_){
           rot_neg_only_ = true;
+	  flag_set = true;
+	}
+        rotating_pos_ = false;
         rotating_neg_ = true;
       }
 
       //check positive rotation
       if(t->thetav_ > 0){
-        if(rotating_neg_)
+        if(rotating_neg_){
           rot_pos_only_ = true;
+	  flag_set = true;
+	}
+        rotating_neg_ = false;
         rotating_pos_ = true;
       }
     }
+    return flag_set;
   }
 
   double DWAPlanner::footprintCost(const Eigen::Vector3f& pos, double scale){

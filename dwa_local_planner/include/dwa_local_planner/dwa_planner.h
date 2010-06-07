@@ -73,7 +73,7 @@ namespace dwa_local_planner {
       void selectBestTrajectoryInPlaceRot(base_local_planner::Trajectory* &best, base_local_planner::Trajectory* &comp, double& best_heading_dist);
       void resetOscillationFlags();
       void resetOscillationFlagsIfPossible(const Eigen::Vector3f& pos, const Eigen::Vector3f& prev);
-      void setOscillationFlags(base_local_planner::Trajectory* t);
+      bool setOscillationFlags(base_local_planner::Trajectory* t);
       double headingDiff(double gx, double gy, const Eigen::Vector3f& pos);
 
       inline Eigen::Vector3f getMaxSpeedToStopInTime(double time){
@@ -114,6 +114,7 @@ namespace dwa_local_planner {
       base_local_planner::Trajectory traj_one_, traj_two_;
       bool strafe_pos_only_, strafe_neg_only_, strafing_pos_, strafing_neg_;
       bool rot_pos_only_, rot_neg_only_, rotating_pos_, rotating_neg_;
+      bool forward_pos_only_, forward_neg_only_, forward_pos_, forward_neg_;
       double oscillation_reset_dist_;
       double heading_lookahead_, rotation_lookahead_;
       double scaling_speed_, max_scaling_factor_;
