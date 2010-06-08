@@ -125,74 +125,7 @@ namespace pose_base_controller {
 
     move_base_msgs::MoveBaseGoal goal = goalToFixedFrame(*user_goal);
 
-    //in the case that the robot is holonomic, we'll just pass the goal straight to the control loop
-    if(holonomic_){
-      success = controlLoop(goal);
-    }
-    else{
-      try {
-        tf::Stamped<tf::Pose> robot_pose;
-        //get the pose of the robot
-        robot_pose = getRobotPose();
-
-        tf::Stamped<tf::Pose> target_pose;
-        tf::poseStampedMsgToTF(goal.target_pose, target_pose);
-
-        //we want to compute a goal based on the heading difference between our pose and the target
-        double yaw_diff = headingDiff(target_pose.getOrigin().x(), target_pose.getOrigin().y(), 
-            robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()));
-
-        //we'll also check if we can move more effectively backwards
-        double neg_yaw_diff = headingDiff(target_pose.getOrigin().x(), target_pose.getOrigin().y(), 
-            robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), M_PI + tf::getYaw(robot_pose.getRotation()));
-
-        //check if its faster to just back up
-        if(fabs(neg_yaw_diff) < fabs(yaw_diff)){
-          ROS_DEBUG("Negative is better: %.2f", neg_yaw_diff);
-          yaw_diff = neg_yaw_diff;
-        }
-
-        //compute the desired quaterion
-        tf::Quaternion diff = tf::createQuaternionFromYaw(yaw_diff);
-        tf::Quaternion rot = robot_pose.getRotation() * diff;
-
-        //now we need to create a new goal
-        move_base_msgs::MoveBaseGoal mb_goal;
-        mb_goal.target_pose.header = goal.target_pose.header;
-        mb_goal.target_pose.pose.position.x = robot_pose.getOrigin().x();
-        mb_goal.target_pose.pose.position.y = robot_pose.getOrigin().y();
-        tf::quaternionTFToMsg(rot, mb_goal.target_pose.pose.orientation);
-          
-
-        ROS_DEBUG("YAW_DIFF: %.2f, [%.2f, %.2f, %.2f, %.2f]", yaw_diff, mb_goal.target_pose.pose.orientation.x, mb_goal.target_pose.pose.orientation.y, mb_goal.target_pose.pose.orientation.z, mb_goal.target_pose.pose.orientation.w);
-
-        //we'll send the goal to the control loop
-        success = controlLoop(mb_goal);
-
-        //if that was successful... we want to move forward the appropriate amount
-        if(success){
-          robot_pose = getRobotPose();
-
-          //we should be properly oriented... so we can just pass in the target pose with our current orientation
-          mb_goal.target_pose.header = goal.target_pose.header;
-          mb_goal.target_pose.pose.position.x = target_pose.getOrigin().x();
-          mb_goal.target_pose.pose.position.y = target_pose.getOrigin().y();
-          tf::quaternionTFToMsg(robot_pose.getRotation(), mb_goal.target_pose.pose.orientation);
-          
-          //we'll send the goal to the control loop
-          success = controlLoop(mb_goal);
-
-          if(success){
-            //now... we need to achieve the goal orientation... we can just pass the actual target_pose in
-            success = controlLoop(goal);
-          }
-        }
-
-      }
-      catch(tf::TransformException &ex){
-        success = false;
-      }
-    }
+    success = controlLoop(goal);
 
     //based on the control loop's exit status... we'll set our goal status
     if(success){
@@ -271,6 +204,37 @@ namespace pose_base_controller {
   {
     geometry_msgs::Twist res;
     tf::Pose diff = pose2.inverse() * pose1;
+    res.linear.x = diff.getOrigin().x();
+    res.linear.y = diff.getOrigin().y();
+    res.angular.z = tf::getYaw(diff.getRotation());
+
+    if(holonomic_ || (fabs(res.linear.x) <= tolerance_trans_ && fabs(res.linear.y) <= tolerance_trans_))
+      return res;
+
+    //in the case that we're not rotating to our goal position and we have a non-holonomic robot
+    //we'll need to command a rotational velocity that will help us reach our desired heading
+    
+    //we want to compute a goal based on the heading difference between our pose and the target
+    double yaw_diff = headingDiff(pose1.getOrigin().x(), pose1.getOrigin().y(), 
+        pose2.getOrigin().x(), pose2.getOrigin().y(), tf::getYaw(pose2.getRotation()));
+
+    //we'll also check if we can move more effectively backwards
+    double neg_yaw_diff = headingDiff(pose1.getOrigin().x(), pose1.getOrigin().y(), 
+        pose2.getOrigin().x(), pose2.getOrigin().y(), M_PI + tf::getYaw(pose2.getRotation()));
+
+    //check if its faster to just back up
+    if(fabs(neg_yaw_diff) < fabs(yaw_diff)){
+      ROS_DEBUG("Negative is better: %.2f", neg_yaw_diff);
+      yaw_diff = neg_yaw_diff;
+    }
+
+    //compute the desired quaterion
+    tf::Quaternion rot_diff = tf::createQuaternionFromYaw(yaw_diff);
+    tf::Quaternion rot = pose2.getRotation() * rot_diff;
+    tf::Pose new_pose = pose1;
+    new_pose.setRotation(rot);
+
+    diff = pose2.inverse() * new_pose;
     res.linear.x = diff.getOrigin().x();
     res.linear.y = diff.getOrigin().y();
     res.angular.z = tf::getYaw(diff.getRotation());

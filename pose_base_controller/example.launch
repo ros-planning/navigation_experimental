@@ -1,7 +1,13 @@
 <launch>
   <node type="pose_base_controller" pkg="pose_base_controller" name="pose_base_controller" output="screen">
-    <remap from="base_controller/command" to="cmd_vel" />
+    <remap from="base_controller/command" to="park_cmd_vel" />
     <param name="fixed_frame" value="odom" />
     <param name="holonomic" value="false" />
+    <param name="k_trans" value="5.0" />
+    <param name="k_rot" value="5.0" />
+    <param name="max_vel_lin" value="0.5" />
+    <param name="max_vel_th" value="1.4" />
+    <param name="tolerance_trans" value="0.05" />
+    <param name="tolerance_rot" value="0.04" />
   </node>
 </launch>
