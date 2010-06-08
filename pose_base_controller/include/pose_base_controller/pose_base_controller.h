@@ -57,7 +57,8 @@ namespace pose_base_controller {
 
       ~PoseBaseController() {}
 
-      void controlLoop(const move_base_msgs::MoveBaseGoalConstPtr& current_goal);
+      void execute(const move_base_msgs::MoveBaseGoalConstPtr& goal);
+      bool controlLoop(const move_base_msgs::MoveBaseGoal& current_goal);
       tf::Stamped<tf::Pose> getRobotPose();
 
       inline double sign(double n){
@@ -66,6 +67,7 @@ namespace pose_base_controller {
 
       geometry_msgs::Twist diff2D(const tf::Pose& pose1, const tf::Pose& pose2);
       geometry_msgs::Twist limitTwist(const geometry_msgs::Twist& twist);
+      double headingDiff(double pt_x, double pt_y, double x, double y, double heading);
 
     private:
       MoveBaseActionServer action_server_;
@@ -77,6 +79,7 @@ namespace pose_base_controller {
       double min_vel_lin_, min_vel_th_;
       double transform_tolerance_;
       std::string fixed_frame_, base_frame_;
+      bool holonomic_;
   };
 };
 #endif

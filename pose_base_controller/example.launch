@@ -1,0 +1,7 @@
+<launch>
+  <node type="pose_base_controller" pkg="pose_base_controller" name="pose_base_controller" output="screen">
+    <remap from="base_controller/command" to="cmd_vel" />
+    <param name="fixed_frame" value="odom" />
+    <param name="holonomic" value="false" />
+  </node>
+</launch>
