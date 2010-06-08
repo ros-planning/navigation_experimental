@@ -57,7 +57,7 @@ namespace pose_base_controller {
 
       ~PoseBaseController() {}
 
-      void execute(const move_base_msgs::MoveBaseGoalConstPtr& goal);
+      void execute(const move_base_msgs::MoveBaseGoalConstPtr& user_goal);
       bool controlLoop(const move_base_msgs::MoveBaseGoal& current_goal);
       tf::Stamped<tf::Pose> getRobotPose();
 
@@ -68,6 +68,7 @@ namespace pose_base_controller {
       geometry_msgs::Twist diff2D(const tf::Pose& pose1, const tf::Pose& pose2);
       geometry_msgs::Twist limitTwist(const geometry_msgs::Twist& twist);
       double headingDiff(double pt_x, double pt_y, double x, double y, double heading);
+      move_base_msgs::MoveBaseGoal goalToFixedFrame(const move_base_msgs::MoveBaseGoal& goal);
 
     private:
       MoveBaseActionServer action_server_;

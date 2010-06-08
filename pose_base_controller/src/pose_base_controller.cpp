@@ -97,12 +97,37 @@ namespace pose_base_controller {
     return global_pose;
   }
 
-  void PoseBaseController::execute(const move_base_msgs::MoveBaseGoalConstPtr& goal){
+  move_base_msgs::MoveBaseGoal PoseBaseController::goalToFixedFrame(const move_base_msgs::MoveBaseGoal& goal){
+    tf::Stamped<tf::Pose> pose, fixed_pose;
+    tf::poseStampedMsgToTF(goal.target_pose, pose);
+
+    //just get the latest available transform... for accuracy they should send
+    //goals in the frame of the planner
+    pose.stamp_ = ros::Time();
+
+    try{
+      tf_.transformPose(fixed_frame_, pose, fixed_pose);
+    }
+    catch(tf::TransformException& ex){
+      ROS_WARN("Failed to transform the goal pose from %s into the %s frame: %s",
+          pose.frame_id_.c_str(), fixed_frame_.c_str(), ex.what());
+      return goal;
+    }
+
+    move_base_msgs::MoveBaseGoal fixed_goal;
+    tf::poseStampedTFToMsg(fixed_pose, fixed_goal.target_pose);
+    return fixed_goal;
+
+  }
+
+  void PoseBaseController::execute(const move_base_msgs::MoveBaseGoalConstPtr& user_goal){
     bool success = false;
+
+    move_base_msgs::MoveBaseGoal goal = goalToFixedFrame(*user_goal);
 
     //in the case that the robot is holonomic, we'll just pass the goal straight to the control loop
     if(holonomic_){
-      success = controlLoop(*goal);
+      success = controlLoop(goal);
     }
     else{
       try {
@@ -111,7 +136,7 @@ namespace pose_base_controller {
         robot_pose = getRobotPose();
 
         tf::Stamped<tf::Pose> target_pose;
-        tf::poseStampedMsgToTF(goal->target_pose, target_pose);
+        tf::poseStampedMsgToTF(goal.target_pose, target_pose);
 
         //we want to compute a goal based on the heading difference between our pose and the target
         double yaw_diff = headingDiff(target_pose.getOrigin().x(), target_pose.getOrigin().y(), 
@@ -133,7 +158,7 @@ namespace pose_base_controller {
 
         //now we need to create a new goal
         move_base_msgs::MoveBaseGoal mb_goal;
-        mb_goal.target_pose.header = goal->target_pose.header;
+        mb_goal.target_pose.header = goal.target_pose.header;
         mb_goal.target_pose.pose.position.x = robot_pose.getOrigin().x();
         mb_goal.target_pose.pose.position.y = robot_pose.getOrigin().y();
         tf::quaternionTFToMsg(rot, mb_goal.target_pose.pose.orientation);
@@ -149,7 +174,7 @@ namespace pose_base_controller {
           robot_pose = getRobotPose();
 
           //we should be properly oriented... so we can just pass in the target pose with our current orientation
-          mb_goal.target_pose.header = goal->target_pose.header;
+          mb_goal.target_pose.header = goal.target_pose.header;
           mb_goal.target_pose.pose.position.x = target_pose.getOrigin().x();
           mb_goal.target_pose.pose.position.y = target_pose.getOrigin().y();
           tf::quaternionTFToMsg(robot_pose.getRotation(), mb_goal.target_pose.pose.orientation);
@@ -159,7 +184,7 @@ namespace pose_base_controller {
 
           if(success){
             //now... we need to achieve the goal orientation... we can just pass the actual target_pose in
-            success = controlLoop(*goal);
+            success = controlLoop(goal);
           }
         }
 
