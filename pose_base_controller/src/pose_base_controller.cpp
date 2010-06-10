@@ -181,6 +181,10 @@ namespace pose_base_controller {
       geometry_msgs::Twist diff = diff2D(target_pose, robot_pose);
       ROS_DEBUG("PoseBaseController: diff %f %f ==> %f", diff.linear.x, diff.linear.y, diff.angular.z);
 
+      //make sure to take out any y component of the velocity
+      if(holonomic_)
+        diff.linear.y = 0.0;
+
       //publish the desired velocity command to the base
       vel_pub_.publish(limitTwist(diff));
 

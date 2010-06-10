@@ -5,7 +5,7 @@
     <param name="holonomic" value="false" />
     <param name="k_trans" value="5.0" />
     <param name="k_rot" value="5.0" />
-    <param name="max_vel_lin" value="0.5" />
+    <param name="max_vel_lin" value="0.3" />
     <param name="max_vel_th" value="1.4" />
     <param name="tolerance_trans" value="0.05" />
     <param name="tolerance_rot" value="0.04" />
