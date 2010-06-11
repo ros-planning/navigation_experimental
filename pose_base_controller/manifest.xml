@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/pose_base_controller</url>
   <depend package="actionlib"/>
   <depend package="move_base_msgs"/>
+  <depend package="nav_msgs"/>
   <depend package="roscpp"/>
   <depend package="tf"/>
   <depend package="geometry_msgs"/>

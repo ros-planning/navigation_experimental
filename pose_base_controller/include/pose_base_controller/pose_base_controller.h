@@ -44,6 +44,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
 
 #include <boost/thread.hpp>
 
@@ -71,6 +72,9 @@ namespace pose_base_controller {
       move_base_msgs::MoveBaseGoal goalToFixedFrame(const move_base_msgs::MoveBaseGoal& goal);
 
     private:
+      void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
+      bool stopped();
+
       MoveBaseActionServer action_server_;
       tf::TransformListener tf_;
       ros::Publisher vel_pub_;
@@ -78,9 +82,14 @@ namespace pose_base_controller {
       double tolerance_timeout_, freq_;
       double max_vel_lin_, max_vel_th_;
       double min_vel_lin_, min_vel_th_;
+      double min_in_place_vel_th_, in_place_trans_vel_;
       double transform_tolerance_;
       std::string fixed_frame_, base_frame_;
       bool holonomic_;
+      boost::mutex odom_lock_;
+      ros::Subscriber odom_sub_;
+      nav_msgs::Odometry base_odom_;
+      double trans_stopped_velocity_, rot_stopped_velocity_;
   };
 };
 #endif

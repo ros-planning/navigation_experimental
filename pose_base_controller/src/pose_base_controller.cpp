@@ -59,14 +59,30 @@ namespace pose_base_controller {
 
     node_private.param("min_vel_lin", min_vel_lin_, 0.0);
     node_private.param("min_vel_th", min_vel_th_, 0.0);
+    node_private.param("min_in_place_vel_th", min_in_place_vel_th_, 0.0);
+    node_private.param("in_place_trans_vel", in_place_trans_vel_, 0.0);
     node_private.param("frequency", freq_, 100.0);
     node_private.param("transform_tolerance", transform_tolerance_, 0.5);
 
+    node_private.param("trans_stopped_velocity", trans_stopped_velocity_, 1e-4);
+    node_private.param("rot_stopped_velocity", rot_stopped_velocity_, 1e-4);
+
     ros::NodeHandle node;
+    odom_sub_ = node.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&PoseBaseController::odomCallback, this, _1));
     vel_pub_ = node.advertise<geometry_msgs::Twist>("base_controller/command", 10);
 
     action_server_.start();
     ROS_DEBUG("Started server");
+  }
+
+  void PoseBaseController::odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
+    //we assume that the odometry is published in the frame of the base
+    boost::mutex::scoped_lock lock(odom_lock_);
+    base_odom_.twist.twist.linear.x = msg->twist.twist.linear.x;
+    base_odom_.twist.twist.linear.y = msg->twist.twist.linear.y;
+    base_odom_.twist.twist.angular.z = msg->twist.twist.angular.z;
+    ROS_DEBUG("In the odometry callback with velocity values: (%.2f, %.2f, %.2f)",
+        base_odom_.twist.twist.linear.x, base_odom_.twist.twist.linear.y, base_odom_.twist.twist.angular.z);
   }
 
   double PoseBaseController::headingDiff(double x, double y, double pt_x, double pt_y, double heading)
@@ -129,6 +145,13 @@ namespace pose_base_controller {
 
     //based on the control loop's exit status... we'll set our goal status
     if(success){
+      //wait until we're stopped before returning success
+      ros::Rate r(10.0);
+      while(!stopped()){
+        geometry_msgs::Twist empty_twist;
+        vel_pub_.publish(empty_twist);
+        r.sleep();
+      }
       action_server_.setSucceeded();
     }
     else{
@@ -138,6 +161,19 @@ namespace pose_base_controller {
       else
         action_server_.setAborted();
     }
+  }
+
+  bool PoseBaseController::stopped(){
+    //copy over the odometry information
+    nav_msgs::Odometry base_odom;
+    {
+      boost::mutex::scoped_lock lock(odom_lock_);
+      base_odom = base_odom_;
+    }
+
+    return fabs(base_odom.twist.twist.angular.z) <= rot_stopped_velocity_
+      && fabs(base_odom.twist.twist.linear.x) <= trans_stopped_velocity_
+      && fabs(base_odom.twist.twist.linear.y) <= trans_stopped_velocity_;
   }
 
   bool PoseBaseController::controlLoop(const move_base_msgs::MoveBaseGoal& current_goal){
@@ -180,10 +216,6 @@ namespace pose_base_controller {
       //get the difference between the two poses
       geometry_msgs::Twist diff = diff2D(target_pose, robot_pose);
       ROS_DEBUG("PoseBaseController: diff %f %f ==> %f", diff.linear.x, diff.linear.y, diff.angular.z);
-
-      //make sure to take out any y component of the velocity
-      if(holonomic_)
-        diff.linear.y = 0.0;
 
       //publish the desired velocity command to the base
       vel_pub_.publish(limitTwist(diff));
@@ -250,7 +282,10 @@ namespace pose_base_controller {
   {
     geometry_msgs::Twist res = twist;
     res.linear.x *= K_trans_;
-    res.linear.y *= K_trans_;
+    if(!holonomic_)
+      res.linear.y = 0.0;
+    else    
+      res.linear.y *= K_trans_;
     res.angular.z *= K_rot_;
 
     //make sure to bound things by our velocity limits
@@ -262,6 +297,10 @@ namespace pose_base_controller {
     }
     if (fabs(res.angular.z) > max_vel_th_) res.angular.z = max_vel_th_ * sign(res.angular.z);
     if (fabs(res.angular.z) < min_vel_th_) res.angular.z = min_vel_th_ * sign(res.angular.z);
+
+    if(fabs(res.linear.x) < in_place_trans_vel_ && fabs(res.linear.y) < in_place_trans_vel_){
+      if (fabs(res.angular.z) < min_in_place_vel_th_) res.angular.z = min_in_place_vel_th_ * sign(res.angular.z);
+    }
 
     ROS_DEBUG("Angular command %f", res.angular.z);
     return res;
