@@ -1,0 +1,26 @@
+<package>
+  <description brief="pose_follower">
+
+     pose_follower
+
+  </description>
+  <author>Eitan Marder-Eppstein</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pose_follower</url>
+  <depend package="nav_core"/>
+  <depend package="base_local_planner"/>
+  <depend package="costmap_2d"/>
+  <depend package="roscpp"/>
+  <depend package="tf"/>
+  <depend package="nav_msgs"/>
+  <depend package="pluginlib"/>
+
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lpose_follower" />
+    <nav_core plugin="${prefix}/blp_plugin.xml" />
+  </export>
+
+</package>
+
+
