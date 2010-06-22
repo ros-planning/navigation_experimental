@@ -49,7 +49,7 @@ namespace goal_passer {
   bool GoalPasser::makePlan(const geometry_msgs::PoseStamped& start, 
       const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan){
     plan.clear();
-    if(last_goal_.pose.position.x == goal.pose.position.x && last_goal_.pose.position.y == goal.pose.position.y
+    if(last_goal_.header.stamp == goal.header.stamp && last_goal_.pose.position.x == goal.pose.position.x && last_goal_.pose.position.y == goal.pose.position.y
         && last_goal_.pose.position.z == goal.pose.position.z && last_goal_.pose.orientation.x == goal.pose.orientation.x
         && last_goal_.pose.orientation.y == goal.pose.orientation.y && last_goal_.pose.orientation.z == goal.pose.orientation.z
         && last_goal_.pose.orientation.w == goal.pose.orientation.w){
