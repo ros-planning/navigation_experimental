@@ -1,0 +1,7 @@
+<library path="lib/libgoal_passer">
+  <class name="goal_passer/GoalPasser" type="goal_passer::GoalPasser" base_class_type="nav_core::BaseGlobalPlanner">
+    <description>
+      Just passes on a goal to the local planner
+    </description>
+  </class>
+</library>
