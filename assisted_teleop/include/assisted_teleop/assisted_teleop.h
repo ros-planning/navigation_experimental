@@ -64,8 +64,7 @@ namespace assisted_teleop {
       int num_th_samples_, num_x_samples_;
       ros::Publisher pub_;
       ros::Subscriber sub_;
-
-
+      double collision_trans_speed_, collision_rot_speed_;
   };
 };
 #endif

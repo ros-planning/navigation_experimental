@@ -43,11 +43,13 @@ namespace assisted_teleop {
     private_nh.param("num_th_samples", num_th_samples_, 20);
     private_nh.param("num_x_samples", num_x_samples_, 10);
     private_nh.param("theta_range", theta_range_, 0.7);
+    private_nh.param("translational_collision_speed", collision_trans_speed_, 0.0);
+    private_nh.param("rotational_collision__speed", collision_rot_speed_, 0.0);
     planner_.initialize("planner", &tf_, &costmap_ros_);
 
     ros::NodeHandle n;
-    sub_ = n.subscribe("teleop_cmd_vel", 10, &AssistedTeleop::velCB, this);
     pub_ = n.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+    sub_ = n.subscribe("teleop_cmd_vel", 10, &AssistedTeleop::velCB, this);
     cmd_vel_.linear.x = 0.0;
     cmd_vel_.linear.y = 0.0;
     cmd_vel_.linear.z = 0.0;
@@ -95,6 +97,7 @@ namespace assisted_teleop {
 
       Eigen::Vector3f best = Eigen::Vector3f::Zero();
       double best_dist = DBL_MAX;
+      bool trajectory_found = false;
 
       //if we don't have a valid trajectory... we'll start checking others in the angular range specified
       for(int i = 0; i < num_x_samples_; ++i){
@@ -113,9 +116,38 @@ namespace assisted_teleop {
             if(sq_dist < best_dist){
               best = check_vel;
               best_dist = sq_dist;
+              trajectory_found = true;
             }
           }
         }
+      }
+
+      //check if best is still zero, if it is... scale the original trajectory based on the collision_speed requested
+      //but we only need to do this if the user has set a non-zero collision speed
+      if(!trajectory_found && (collision_trans_speed_ > 0.0 || collision_rot_speed_ > 0.0)){
+        double trans_scaling_factor = 0.0;
+        double rot_scaling_factor = 0.0;
+        double scaling_factor = 0.0;
+
+        if(fabs(desired_vel[0]) > 0 && fabs(desired_vel[1]) > 0)
+          trans_scaling_factor = std::min(collision_trans_speed_ / fabs(desired_vel[0]), collision_trans_speed_ / fabs(desired_vel[1]));
+        else if(fabs(desired_vel[0]) > 0)
+          trans_scaling_factor = collision_trans_speed_ / (fabs(desired_vel[0]));
+        else if(fabs(desired_vel[1]) > 0)
+          trans_scaling_factor = collision_trans_speed_ / (fabs(desired_vel[1]));
+
+        if(fabs(desired_vel[2]) > 0)
+          rot_scaling_factor = collision_rot_speed_ / (fabs(desired_vel[2]));
+
+        if(collision_trans_speed_ > 0.0 && collision_rot_speed_ > 0.0)
+          scaling_factor = std::min(trans_scaling_factor, rot_scaling_factor);
+        else if(collision_trans_speed_ > 0.0)
+          scaling_factor = trans_scaling_factor;
+        else if(collision_rot_speed_ > 0.0)
+          scaling_factor = rot_scaling_factor;
+
+        //apply the scaling factor
+        best = scaling_factor * best;
       }
 
       geometry_msgs::Twist best_cmd;
