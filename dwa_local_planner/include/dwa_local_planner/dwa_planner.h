@@ -77,7 +77,7 @@ namespace dwa_local_planner {
       double headingDiff(double gx, double gy, const Eigen::Vector3f& pos);
 
       inline Eigen::Vector3f getMaxSpeedToStopInTime(double time){
-        return -0.5 * acc_lim_ * std::max(time, 0.0);
+        return acc_lim_ * std::max(time, 0.0);
       }
 
       inline double getStopTime(const Eigen::Vector3f& vel){
