@@ -205,7 +205,7 @@ bool IsolatedPointFilter::update (const sm::PointCloud& in, sm::PointCloud& out)
     }
     catch (tf::TransformException& e) {
       if (!negate_) {
-        ROS_WARN_STREAM ("Received tf exception " << e.what () << "; passing along cloud");
+        ROS_DEBUG_STREAM_NAMED ("transforms", "Received tf exception " << e.what () << "; passing along cloud");
         out.points = last.points;
       }
       return true;
