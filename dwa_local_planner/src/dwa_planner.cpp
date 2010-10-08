@@ -509,6 +509,10 @@ namespace dwa_local_planner {
     double goal_dist = 0.0;
     double occ_cost = 0.0;
 
+    //we'll also be scoring a point infront of the robot
+    double front_path_dist = 0.0;
+    double front_goal_dist = 0.0;
+
     //create a potential trajectory... it might be reused so we'll make sure to reset it
     traj.resetPoints();
     traj.xv_ = vel[0];
@@ -536,6 +540,18 @@ namespace dwa_local_planner {
         return;
       }
 
+      double front_x = pos[0] + rotation_lookahead_ * cos(pos[2]);
+      double front_y = pos[1] + rotation_lookahead_ * sin(pos[2]);
+
+      unsigned int front_cell_x, front_cell_y;
+      //we won't allow trajectories that go off the map... shouldn't happen that often anyways
+      if(!costmap_.worldToMap(front_x, front_y, front_cell_x, front_cell_y)){
+        //we're off the map
+        traj.cost_ = -1.0;
+        return;
+      }
+
+
       //if we're over a certain speed threshold, we'll scale the robot's
       //footprint to make it either slow down or stay further from walls
       double scale = 1.0;
@@ -550,6 +566,10 @@ namespace dwa_local_planner {
 
       //if the footprint hits an obstacle... we'll check if we can stop before we hit it... given the time to get there
       if(footprint_cost < 0){
+        traj.cost_ = -1.0;
+        return;
+
+        /* TODO: I'm not convinced this code is working properly
         //we want to compute the max allowable speeds to be able to stop
         //to be safe... we'll make sure we can stop some time before we actually hit
         Eigen::Vector3f max_vel = getMaxSpeedToStopInTime(time - stop_time_buffer_);
@@ -564,12 +584,16 @@ namespace dwa_local_planner {
           traj.cost_ = -1.0;
           return;
         }
+        */
       }
 
       //compute the costs for this point on the trajectory
       occ_cost = std::max(std::max(occ_cost, footprint_cost), double(costmap_.getCost(cell_x, cell_y)));
       path_dist = map_(cell_x, cell_y).path_dist;
       goal_dist = map_(cell_x, cell_y).goal_dist;
+
+      front_path_dist = map_(front_cell_x, front_cell_y).path_dist;
+      front_goal_dist = map_(front_cell_x, front_cell_y).goal_dist;
 
       //check if we want to compute heading distance
       if(time > stop_time && time < stop_time + dt){
@@ -601,7 +625,8 @@ namespace dwa_local_planner {
     //compute the final cost
     //traj.cost_ = gdist_scale_ * normalized_gdist + pdist_scale_ * normalized_pdist + occdist_scale_* normalized_occ_cost; 
     //traj.cost_ = 1.0 * normalized_heading + gdist_scale_ * normalized_gdist; // +   0.2 * normalized_vel + 0.2 * normalized_occ_cost;
-    traj.cost_ = heading_scale_ * normalized_heading + pdist_scale_ * path_dist + gdist_scale_ * goal_dist + occdist_scale_ * occ_cost;
+    //traj.cost_ = heading_scale_ * normalized_heading + pdist_scale_ * front_path_dist + gdist_scale_ * front_goal_dist + occdist_scale_ * occ_cost;
+    traj.cost_ = pdist_scale_ * ((front_path_dist + path_dist) / 2.0) + gdist_scale_ * ((front_goal_dist + path_dist) / 2.0) + occdist_scale_ * occ_cost;
     //ROS_ERROR("%.2f, %.2f, %.2f, %.2f", vel[0], vel[1], vel[2], traj.cost_);
   }
 
