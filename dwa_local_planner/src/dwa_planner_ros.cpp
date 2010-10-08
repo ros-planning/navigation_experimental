@@ -71,7 +71,7 @@ namespace dwa_local_planner {
       pn.param("max_rotational_vel", max_vel_th_, 1.0);
       min_vel_th_ = -1.0 * max_vel_th_;
 
-      pn.param("min_in_place_rotational_vel", min_in_place_vel_th_, 0.4);
+      pn.param("min_rot_vel", min_rot_vel_, 0.4);
 
       //create the actual planner that we'll use.. it'll configure itself from the parameter server
       dp_ = boost::shared_ptr<DWAPlanner>(new DWAPlanner(name, costmap_ros_));
@@ -132,8 +132,8 @@ namespace dwa_local_planner {
     double ang_diff = angles::shortest_angular_distance(yaw, goal_th);
 
     double v_theta_samp = ang_diff > 0.0 ? std::min(max_vel_th_,
-        std::max(min_in_place_vel_th_, ang_diff)) : std::max(min_vel_th_,
-        std::min(-1.0 * min_in_place_vel_th_, ang_diff));
+        std::max(min_rot_vel_, ang_diff)) : std::max(min_vel_th_,
+        std::min(-1.0 * min_rot_vel_, ang_diff));
 
     //take the acceleration limits of the robot into account
     double max_acc_vel = fabs(vel_yaw) + acc_lim[2] * dp_->getSimPeriod();
@@ -145,6 +145,9 @@ namespace dwa_local_planner {
     double max_speed_to_stop = sqrt(2 * acc_lim[2] * fabs(ang_diff)); 
 
     v_theta_samp = sign(v_theta_samp) * std::min(max_speed_to_stop, fabs(v_theta_samp));
+
+    if(fabs(v_theta_samp) < min_rot_vel_)
+      v_theta_samp = sign(v_theta_samp) * min_rot_vel_;
 
     //we still want to lay down the footprint of the robot and check if the action is legal
     bool valid_cmd = dp_->checkTrajectory(Eigen::Vector3f(global_pose.getOrigin().getX(), global_pose.getOrigin().getY(), yaw),

@@ -34,45 +34,52 @@
 *
 * Author: Eitan Marder-Eppstein
 *********************************************************************/
-#ifndef DWA_LOCAL_PLANNER_DWA_PLANNER_ROS_H_
-#define DWA_LOCAL_PLANNER_DWA_PLANNER_ROS_H_
-#include <angles/angles.h>
-#include <dwa_local_planner/dwa_planner.h>
-#include <boost/shared_ptr.hpp>
-#include <nav_core/base_local_planner.h>
+#ifndef DWA_LOCAL_PLANNER_VELOCITY_ITERATOR_H_
+#define DWA_LOCAL_PLANNER_VELOCITY_ITERATOR_H_
+#include <algorithm>
 
 namespace dwa_local_planner {
-  class DWAPlannerROS : public nav_core::BaseLocalPlanner {
+  class VelocityIterator {
     public:
-      DWAPlannerROS() : costmap_ros_(NULL), tf_(NULL), initialized_(false) {}
-      void initialize(std::string name, tf::TransformListener* tf, costmap_2d::Costmap2DROS* costmap_ros);
-      bool isGoalReached();
-      bool setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan);
-      bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel);
-
-    private:
-      inline double sign(double x){
-        return x < 0.0 ? -1.0 : 1.0;
+      VelocityIterator(double min, double max, double step_size):
+        min_(min),
+        max_(max),
+        step_size_(step_size),
+        current_sample_(min),
+        finished_(false)
+      {
       }
 
-      bool rotateToGoal(const tf::Stamped<tf::Pose>& global_pose, const tf::Stamped<tf::Pose>& robot_vel, double goal_th, geometry_msgs::Twist& cmd_vel);
-      bool stopWithAccLimits(const tf::Stamped<tf::Pose>& global_pose, const tf::Stamped<tf::Pose>& robot_vel, geometry_msgs::Twist& cmd_vel);
-      void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
+      double getVelocity(){
+        return current_sample_;
+      }
 
-      costmap_2d::Costmap2DROS* costmap_ros_;
-      tf::TransformListener* tf_;
-      double max_vel_th_, min_vel_th_, min_rot_vel_;
-      double rot_stopped_vel_, trans_stopped_vel_;
-      double yaw_goal_tolerance_, xy_goal_tolerance_;
-      bool prune_plan_;
-      bool initialized_;
-      ros::Subscriber odom_sub_;
-      ros::Publisher g_plan_pub_, l_plan_pub_;
-      boost::mutex odom_mutex_;
-      nav_msgs::Odometry base_odom_;
-      boost::shared_ptr<DWAPlanner> dp_;
-      std::vector<geometry_msgs::PoseStamped> global_plan_;
-      bool rotating_to_goal_;
+      VelocityIterator& operator++(int){
+        if(current_sample_ == max_){
+          finished_ = true;
+          return *this;
+        }
+
+        double next_sample_ = current_sample_ + step_size_;
+
+        if(next_sample_ * current_sample_ < 0.0)
+          current_sample_ = 0.0;
+        else
+          current_sample_ = next_sample_;
+
+        if(current_sample_ >= max_)
+          current_sample_ = max_;
+
+        return *this;
+      }
+
+      bool isFinished(){
+        return finished_;
+      }
+
+    private:
+      double min_, max_, step_size_, current_sample_;
+      bool finished_;
   };
 };
 #endif

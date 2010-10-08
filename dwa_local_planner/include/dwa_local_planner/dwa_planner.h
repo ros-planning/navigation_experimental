@@ -48,6 +48,7 @@
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 #include <ros/ros.h>
+#include <dwa_local_planner/velocity_iterator.h>
 
 namespace dwa_local_planner {
   class DWAPlanner {
@@ -57,7 +58,7 @@ namespace dwa_local_planner {
       ~DWAPlanner() {delete world_model_;}
 
       Eigen::Vector3f computeNewPositions(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel, double dt);
-      void generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, const geometry_msgs::PoseStamped& heading_pose, base_local_planner::Trajectory& traj);
+      void generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, base_local_planner::Trajectory& traj, bool two_point_scoring);
       base_local_planner::Trajectory computeTrajectories(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel);
       bool checkTrajectory(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel);
       base_local_planner::Trajectory findBestPath(tf::Stamped<tf::Pose> global_pose, tf::Stamped<tf::Pose> global_vel, 
@@ -70,11 +71,15 @@ namespace dwa_local_planner {
     private:
       double footprintCost(const Eigen::Vector3f& pos, double scale);
       void selectBestTrajectory(base_local_planner::Trajectory* &best, base_local_planner::Trajectory* &comp);
-      void selectBestTrajectoryInPlaceRot(base_local_planner::Trajectory* &best, base_local_planner::Trajectory* &comp, double& best_heading_dist);
       void resetOscillationFlags();
       void resetOscillationFlagsIfPossible(const Eigen::Vector3f& pos, const Eigen::Vector3f& prev);
       bool setOscillationFlags(base_local_planner::Trajectory* t);
       double headingDiff(double gx, double gy, const Eigen::Vector3f& pos);
+
+      inline double squareDist(const geometry_msgs::PoseStamped& p1, const geometry_msgs::PoseStamped& p2){
+        return (p1.pose.position.x - p2.pose.position.x) * (p1.pose.position.x - p2.pose.position.x)
+          + (p1.pose.position.y - p2.pose.position.y) * (p1.pose.position.y - p2.pose.position.y);
+      }
 
       inline Eigen::Vector3f getMaxSpeedToStopInTime(double time){
         return acc_lim_ * std::max(time, 0.0);
@@ -101,8 +106,9 @@ namespace dwa_local_planner {
       }
 
       int getHeadingLookaheadIndex(double dist, const Eigen::Vector3f& pos);
+      bool oscillationCheck(const Eigen::Vector3f& vel);
 
-      base_local_planner::MapGrid map_;
+      base_local_planner::MapGrid map_, front_map_;
       costmap_2d::Costmap2DROS* costmap_ros_;
       costmap_2d::Costmap2D costmap_;
       double stop_time_buffer_;
@@ -112,15 +118,15 @@ namespace dwa_local_planner {
       base_local_planner::CostmapModel* world_model_;
       double sim_time_, sim_granularity_;
       double max_vel_x_, min_vel_x_;
-      double max_vel_y_, min_vel_y_, min_vel_trans_;
-      double max_vel_th_, min_vel_th_, min_in_place_vel_th_;
+      double max_vel_y_, min_vel_y_, min_vel_trans_, max_vel_trans_;
+      double max_vel_th_, min_vel_th_, min_rot_vel_;
       double sim_period_;
       base_local_planner::Trajectory traj_one_, traj_two_;
       bool strafe_pos_only_, strafe_neg_only_, strafing_pos_, strafing_neg_;
       bool rot_pos_only_, rot_neg_only_, rotating_pos_, rotating_neg_;
       bool forward_pos_only_, forward_neg_only_, forward_pos_, forward_neg_;
       double oscillation_reset_dist_;
-      double heading_lookahead_, rotation_lookahead_;
+      double heading_lookahead_, forward_point_distance_;
       double scaling_speed_, max_scaling_factor_;
       std::vector<geometry_msgs::PoseStamped> global_plan_;
   };
