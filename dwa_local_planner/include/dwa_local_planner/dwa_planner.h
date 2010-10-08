@@ -96,6 +96,10 @@ namespace dwa_local_planner {
         return sqrt(y_squared);
       }
 
+      double sign(double x){
+        return x < 0.0 ? -1.0 : 1.0;
+      }
+
       int getHeadingLookaheadIndex(double dist, const Eigen::Vector3f& pos);
 
       base_local_planner::MapGrid map_;

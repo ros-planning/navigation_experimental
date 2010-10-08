@@ -175,13 +175,29 @@ namespace dwa_local_planner {
 
     //compute the feasible velocity space based on the rate at which we run
     Eigen::Vector3f max_vel = Eigen::Vector3f::Zero();
-    max_vel[0] = std::max(std::min(max_vel_x_, vel[0] + acc_lim_[0] * sim_period_), min_vel_trans_);
-    max_vel[1] = std::max(std::min(max_vel_y_, vel[1] + acc_lim_[1] * sim_period_), min_vel_trans_);
+    if(max_vel_x_ >= 0)
+      max_vel[0] = std::max(std::min(max_vel_x_, vel[0] + acc_lim_[0] * sim_period_), min_vel_trans_);
+    else
+      max_vel[0] = std::min(std::max(max_vel_x_, vel[0] + acc_lim_[0] * sim_period_), -1.0 * min_vel_trans_);
+
+    if(max_vel_y_ >= 0)
+      max_vel[1] = std::max(std::min(max_vel_y_, vel[1] + acc_lim_[1] * sim_period_), min_vel_trans_);
+    else
+      max_vel[1] = std::min(std::max(max_vel_y_, vel[1] + acc_lim_[1] * sim_period_), -1.0 * min_vel_trans_);
+
     max_vel[2] = std::max(std::min(max_vel_th_, vel[2] + acc_lim_[2] * sim_period_), min_vel_th_);
 
     Eigen::Vector3f min_vel = Eigen::Vector3f::Zero();
-    min_vel[0] = std::min(std::max(min_vel_x_, vel[0] - acc_lim_[0] * sim_period_), -1.0 * min_vel_trans_);
-    min_vel[1] = std::min(std::max(min_vel_y_, vel[1] - acc_lim_[1] * sim_period_), -1.0 * min_vel_trans_);
+    if(min_vel_x_ >= 0)
+      min_vel[0] = std::max(std::max(min_vel_x_, vel[0] - acc_lim_[0] * sim_period_), min_vel_trans_);
+    else
+      min_vel[0] = std::min(std::min(min_vel_x_, vel[0] - acc_lim_[0] * sim_period_), -1.0 * min_vel_trans_);
+
+    if(min_vel_y_ >= 0)
+      min_vel[1] = std::max(std::max(min_vel_y_, vel[1] - acc_lim_[1] * sim_period_), min_vel_trans_);
+    else
+      min_vel[1] = std::min(std::min(min_vel_y_, vel[1] - acc_lim_[1] * sim_period_), -1.0 * min_vel_trans_);
+
     min_vel[2] = std::min(std::max(min_vel_th_, vel[2] - acc_lim_[2] * sim_period_), max_vel_th_);
 
     Eigen::Vector3f dv = Eigen::Vector3f::Zero();
