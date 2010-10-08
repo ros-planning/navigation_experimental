@@ -626,7 +626,8 @@ namespace dwa_local_planner {
     //traj.cost_ = gdist_scale_ * normalized_gdist + pdist_scale_ * normalized_pdist + occdist_scale_* normalized_occ_cost; 
     //traj.cost_ = 1.0 * normalized_heading + gdist_scale_ * normalized_gdist; // +   0.2 * normalized_vel + 0.2 * normalized_occ_cost;
     //traj.cost_ = heading_scale_ * normalized_heading + pdist_scale_ * front_path_dist + gdist_scale_ * front_goal_dist + occdist_scale_ * occ_cost;
-    traj.cost_ = pdist_scale_ * ((front_path_dist + path_dist) / 2.0) + gdist_scale_ * ((front_goal_dist + path_dist) / 2.0) + occdist_scale_ * occ_cost;
+    double resolution = costmap_.getResolution();
+    traj.cost_ = pdist_scale_ * resolution * ((front_path_dist + path_dist) / 2.0) + gdist_scale_ * resolution * ((front_goal_dist + path_dist) / 2.0) + occdist_scale_ * occ_cost;
     //ROS_ERROR("%.2f, %.2f, %.2f, %.2f", vel[0], vel[1], vel[2], traj.cost_);
   }
 
