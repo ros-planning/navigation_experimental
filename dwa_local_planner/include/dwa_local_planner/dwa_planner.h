@@ -50,6 +50,9 @@
 #include <ros/ros.h>
 #include <dwa_local_planner/velocity_iterator.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <dwa_local_planner/DWAPlannerConfig.h>
+
 namespace dwa_local_planner {
   class DWAPlanner {
     public:

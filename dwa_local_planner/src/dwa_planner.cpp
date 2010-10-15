@@ -57,8 +57,8 @@ namespace dwa_local_planner {
     acc_lim_[1] = acc_lim_y;
     acc_lim_[2] = acc_lim_th;
 
-    pn.param("max_vel_x", max_vel_x_, 0.6);
-    pn.param("min_vel_x", min_vel_x_, 0.1);
+    pn.param("max_vel_x", max_vel_x_, 0.55);
+    pn.param("min_vel_x", min_vel_x_, 0.0);
 
     pn.param("max_vel_y", max_vel_y_, 0.1);
     pn.param("min_vel_y", min_vel_y_, -0.1);
@@ -66,21 +66,19 @@ namespace dwa_local_planner {
     pn.param("min_trans_vel", min_vel_trans_, 0.1);
     pn.param("max_trans_vel", max_vel_trans_, max_vel_x_);
 
-    pn.param("max_rotational_vel", max_vel_th_, 1.0);
+    pn.param("max_rot_vel", max_vel_th_, 1.0);
     min_vel_th_ = -1.0 * max_vel_th_;
 
     pn.param("min_rot_vel", min_rot_vel_, 0.4);
 
-    pn.param("sim_time", sim_time_, 1.5);
+    pn.param("sim_time", sim_time_, 1.7);
     pn.param("sim_granularity", sim_granularity_, 0.025);
-    pn.param("path_distance_bias", pdist_scale_, 0.6);
-    pn.param("goal_distance_bias", gdist_scale_, 0.8);
+    pn.param("path_distance_bias", pdist_scale_, 32.0);
+    pn.param("goal_distance_bias", gdist_scale_, 24.0);
     pn.param("occdist_scale", occdist_scale_, 0.01);
-    pn.param("heading_scale", heading_scale_, 1.0);
 
     pn.param("stop_time_buffer", stop_time_buffer_, 0.2);
     pn.param("oscillation_reset_dist", oscillation_reset_dist_, 0.05);
-    pn.param("heading_lookahead", heading_lookahead_, 1.0);
     pn.param("forward_point_distance", forward_point_distance_, 0.325);
 
     pn.param("scaling_speed", scaling_speed_, 0.5);
@@ -428,9 +426,9 @@ namespace dwa_local_planner {
       //if we're over a certain speed threshold, we'll scale the robot's
       //footprint to make it either slow down or stay further from walls
       double scale = 1.0;
-      if(vel[0] > scaling_speed_){
+      if(vmag > scaling_speed_){
         //scale up to the max scaling factor linearly... this could be changed later
-        double ratio = (vel[0] - scaling_speed_) / (max_vel_x_ - scaling_speed_);
+        double ratio = (vmag - scaling_speed_) / (max_vel_trans_ - scaling_speed_);
         scale = max_scaling_factor_ * ratio + 1.0;
       }
 
