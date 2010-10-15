@@ -4,10 +4,11 @@
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/navigation_experimental</url>
-  <depend stack="common" /> <!-- actionlib -->
-  <depend stack="common_msgs" /> <!-- geometry_msgs -->
-  <depend stack="geometry" /> <!-- tf, angles -->
-  <depend stack="navigation" /> <!-- move_base_msgs, base_local_planner, costmap_2d -->
+  <depend stack="common" /> <!-- actionlib, filters, pluginlib -->
+  <depend stack="common_msgs" /> <!-- nav_msgs, sensor_msgs, geometry_msgs -->
+  <depend stack="driver_common" /> <!-- dynamic_reconfigure -->
+  <depend stack="geometry" /> <!-- tf, eigen, angles -->
+  <depend stack="navigation" /> <!-- move_base_msgs, nav_core, base_local_planner, costmap_2d -->
   <depend stack="ros" /> <!-- roslib, roscpp, message_filters -->
 
 </stack>
