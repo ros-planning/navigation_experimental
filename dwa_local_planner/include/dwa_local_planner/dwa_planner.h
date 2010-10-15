@@ -72,6 +72,7 @@ namespace dwa_local_planner {
       
 
     private:
+      void reconfigureCB(DWAPlannerConfig &config, uint32_t level);
       double footprintCost(const Eigen::Vector3f& pos, double scale);
       void selectBestTrajectory(base_local_planner::Trajectory* &best, base_local_planner::Trajectory* &comp);
       void resetOscillationFlags();
@@ -132,6 +133,9 @@ namespace dwa_local_planner {
       double heading_lookahead_, forward_point_distance_;
       double scaling_speed_, max_scaling_factor_;
       std::vector<geometry_msgs::PoseStamped> global_plan_;
+      dynamic_reconfigure::Server<DWAPlannerConfig> dsrv_;
+      boost::mutex configuration_mutex_;
+      bool first_reconfigure_;
   };
 };
 #endif
