@@ -56,11 +56,16 @@ namespace move_slow_and_clear
       void runBehavior();
 
     private:
-      ros::NodeHandle private_nh_;
+      void setRobotSpeed(double speed);
+      void distanceCheck(const ros::TimerEvent& e);
+
+      ros::NodeHandle private_nh_, planner_nh_;
       costmap_2d::Costmap2DROS* global_costmap_;
       costmap_2d::Costmap2DROS* local_costmap_;
       bool initialized_;
       double clearing_distance_;
+      double limited_speed_, old_speed_;
+      ros::Timer distance_check_timer_;
   };
 };
 

@@ -52,7 +52,13 @@ namespace move_slow_and_clear
     local_costmap_ = local_costmap;
 
     ros::NodeHandle private_nh_("~/" + n);
-    private_nh.param("clearing_distance", clearing_distance_, 0.5);
+    private_nh_.param("clearing_distance", clearing_distance_, 0.5);
+    private_nh_.param("limited_speed", limited_speed_, 0.25);
+
+    std::string planner_namespace;
+    private_nh_.param("planner_namespace", planner_namespace, std::string("DWAPlannerROS"));
+
+    planner_nh_ = ros::NodeHandle("~/" + planner_namespace);
 
     initialized_ = true;
   }
@@ -96,8 +102,31 @@ namespace move_slow_and_clear
     global_costmap_->setConvexPolygonCost(global_poly, costmap_2d::FREE_SPACE);
     local_costmap_->setConvexPolygonCost(local_poly, costmap_2d::FREE_SPACE);
 
+    //get the old maximum speed for the robot... we'll want to set it back
+    if(!planner_nh_.getParam("max_trans_vel", old_speed_))
+    {
+      ROS_ERROR("The planner %s, does not have the parameter max_trans_vel", planner_nh_.getNamespace().c_str());
+    }
+
     //limit the speed of the robot until it moves a certain distance
     setRobotSpeed(limited_speed_);
+    distance_check_timer_ = private_nh_.createTimer(ros::Duration(0.1), &MoveSlowAndClear::distanceCheck, this);
+  }
+
+  void MoveSlowAndClear::distanceCheck(const ros::TimerEvent& e)
+  {
+    ROS_ERROR("Timer called");
+  }
+
+  void MoveSlowAndClear::setRobotSpeed(double speed)
+  {
+    std::ostringstream command;
+    command << "rosrun dynamic_reconfigure dynparam set " << planner_nh_.getNamespace() << " max_trans_vel " << speed;
+    ROS_ERROR("%s", command.str().c_str());
+    if(system(command.str().c_str()) < 0)
+    {
+      ROS_ERROR("Something went wrong in the system call to dynparam");
+    }
   }
 
 };
