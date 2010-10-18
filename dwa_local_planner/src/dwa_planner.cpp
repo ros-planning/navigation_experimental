@@ -128,7 +128,7 @@ namespace dwa_local_planner {
     config.vth_samples = vsamples_[2];
   }
 
-  DWAPlanner::DWAPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros) : costmap_ros_(NULL), world_model_(NULL), first_reconfigure_(true) {
+  DWAPlanner::DWAPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros) : costmap_ros_(NULL), world_model_(NULL), dsrv_(ros::NodeHandle("~/" + name)), first_reconfigure_(true) {
     costmap_ros_ = costmap_ros;
     costmap_ros_->getCostmapCopy(costmap_);
 
