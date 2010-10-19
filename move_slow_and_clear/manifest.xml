@@ -13,6 +13,7 @@
   <depend package="costmap_2d"/>
   <depend package="geometry_msgs"/>
   <depend package="pluginlib"/>
+  <depend package="dynamic_reconfigure"/>
 
   <export>
     <nav_core plugin="${prefix}/recovery_plugin.xml" />
