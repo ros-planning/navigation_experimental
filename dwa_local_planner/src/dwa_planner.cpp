@@ -42,93 +42,66 @@ namespace dwa_local_planner {
   {
     boost::mutex::scoped_lock l(configuration_mutex_);
 
-    if(!first_reconfigure_)
-    {
-      max_vel_x_ = config.max_vel_x;
-      min_vel_x_ = config.min_vel_x;
+    max_vel_x_ = config.max_vel_x;
+    min_vel_x_ = config.min_vel_x;
 
-      max_vel_y_ = config.max_vel_y;
-      min_vel_y_ = config.min_vel_y;
+    max_vel_y_ = config.max_vel_y;
+    min_vel_y_ = config.min_vel_y;
 
-      min_vel_trans_ = config.min_trans_vel;
-      max_vel_trans_ = config.max_trans_vel;
+    min_vel_trans_ = config.min_trans_vel;
+    max_vel_trans_ = config.max_trans_vel;
 
-      max_vel_th_ = config.max_rot_vel;
-      min_vel_th_ = -1.0 * max_vel_th_;
+    max_vel_th_ = config.max_rot_vel;
+    min_vel_th_ = -1.0 * max_vel_th_;
 
-      min_rot_vel_ = config.min_rot_vel;
+    min_rot_vel_ = config.min_rot_vel;
 
-      sim_time_ = config.sim_time;
-      sim_granularity_ = config.sim_granularity;
-      pdist_scale_ = config.path_distance_bias;
-      gdist_scale_ = config.goal_distance_bias;
-      occdist_scale_ = config.occdist_scale;
+    sim_time_ = config.sim_time;
+    sim_granularity_ = config.sim_granularity;
+    pdist_scale_ = config.path_distance_bias;
+    gdist_scale_ = config.goal_distance_bias;
+    occdist_scale_ = config.occdist_scale;
 
-      stop_time_buffer_ = config.stop_time_buffer;
-      oscillation_reset_dist_ = config.oscillation_reset_dist;
-      forward_point_distance_ = config.forward_point_distance;
+    stop_time_buffer_ = config.stop_time_buffer;
+    oscillation_reset_dist_ = config.oscillation_reset_dist;
+    forward_point_distance_ = config.forward_point_distance;
 
-      scaling_speed_ = config.scaling_speed;
-      max_scaling_factor_ = config.max_scaling_factor;
+    scaling_speed_ = config.scaling_speed;
+    max_scaling_factor_ = config.max_scaling_factor;
 
-      int vx_samp, vy_samp, vth_samp;
-      vx_samp = config.vx_samples;
-      vy_samp = config.vy_samples;
-      vth_samp = config.vth_samples;
+    int vx_samp, vy_samp, vth_samp;
+    vx_samp = config.vx_samples;
+    vy_samp = config.vy_samples;
+    vth_samp = config.vth_samples;
 
-      if(vx_samp <= 0){
-        ROS_WARN("You've specified that you don't want any samples in the x dimension. We'll at least assume that you want to sample one value... so we're going to set vx_samples to 1 instead");
-        vx_samp = 1;
-        config.vx_samples = vx_samp;
-      }
-
-      if(vy_samp <= 0){
-        ROS_WARN("You've specified that you don't want any samples in the y dimension. We'll at least assume that you want to sample one value... so we're going to set vy_samples to 1 instead");
-        vy_samp = 1;
-        config.vy_samples = vy_samp;
-      }
-
-      if(vth_samp <= 0){
-        ROS_WARN("You've specified that you don't want any samples in the th dimension. We'll at least assume that you want to sample one value... so we're going to set vth_samples to 1 instead");
-        vth_samp = 1;
-        config.vth_samples = vth_samp;
-      }
-
-      sim_period_ = config.sim_period;
-
-      vsamples_[0] = vx_samp;
-      vsamples_[1] = vy_samp;
-      vsamples_[2] = vth_samp;
+    if(vx_samp <= 0){
+      ROS_WARN("You've specified that you don't want any samples in the x dimension. We'll at least assume that you want to sample one value... so we're going to set vx_samples to 1 instead");
+      vx_samp = 1;
+      config.vx_samples = vx_samp;
     }
 
-    first_reconfigure_ = false;
+    if(vy_samp <= 0){
+      ROS_WARN("You've specified that you don't want any samples in the y dimension. We'll at least assume that you want to sample one value... so we're going to set vy_samples to 1 instead");
+      vy_samp = 1;
+      config.vy_samples = vy_samp;
+    }
 
-    //make sure to set the configuration based on current values so that users
-    //can still use parameters normally
-    config.max_vel_x = max_vel_x_ ;
-    config.min_vel_x = min_vel_x_ ;
-    config.max_vel_y = max_vel_y_ ;
-    config.min_vel_y = min_vel_y_ ;
-    config.min_trans_vel = min_vel_trans_ ;
-    config.max_trans_vel = max_vel_trans_ ;
-    config.max_rot_vel = max_vel_th_ ;
-    config.min_rot_vel = min_rot_vel_ ;
-    config.sim_time = sim_time_ ;
-    config.sim_granularity = sim_granularity_ ;
-    config.path_distance_bias = pdist_scale_ ;
-    config.goal_distance_bias = gdist_scale_ ;
-    config.occdist_scale = occdist_scale_ ;
-    config.stop_time_buffer = stop_time_buffer_ ;
-    config.oscillation_reset_dist = oscillation_reset_dist_ ;
-    config.forward_point_distance = forward_point_distance_ ;
-    config.scaling_speed = scaling_speed_ ;
-    config.max_scaling_factor = max_scaling_factor_ ;
-    config.vx_samples = vsamples_[0];
-    config.vy_samples = vsamples_[1];
-    config.vth_samples = vsamples_[2];
+    if(vth_samp <= 0){
+      ROS_WARN("You've specified that you don't want any samples in the th dimension. We'll at least assume that you want to sample one value... so we're going to set vth_samples to 1 instead");
+      vth_samp = 1;
+      config.vth_samples = vth_samp;
+    }
+
+    sim_period_ = config.sim_period;
+
+    vsamples_[0] = vx_samp;
+    vsamples_[1] = vy_samp;
+    vsamples_[2] = vth_samp;
+
+    penalize_negative_x_ = config.penalize_negative_x;
   }
 
-  DWAPlanner::DWAPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros) : costmap_ros_(NULL), world_model_(NULL), dsrv_(ros::NodeHandle("~/" + name)), first_reconfigure_(true) {
+  DWAPlanner::DWAPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros) : costmap_ros_(NULL), world_model_(NULL), dsrv_(ros::NodeHandle("~/" + name)), penalize_negative_x_(true) {
     costmap_ros_ = costmap_ros;
     costmap_ros_->getCostmapCopy(costmap_);
 
@@ -137,7 +110,6 @@ namespace dwa_local_planner {
     front_map_ = base_local_planner::MapGrid(costmap_.getSizeInCellsX(), costmap_.getSizeInCellsY(), 
         costmap_.getResolution(), costmap_.getOriginX(), costmap_.getOriginY());
     ros::NodeHandle pn("~/" + name);
-
 
     double acc_lim_x, acc_lim_y, acc_lim_th;
     pn.param("acc_lim_x", acc_lim_x, 2.5);
@@ -148,58 +120,8 @@ namespace dwa_local_planner {
     acc_lim_[1] = acc_lim_y;
     acc_lim_[2] = acc_lim_th;
 
-    pn.param("max_vel_x", max_vel_x_, 0.55);
-    pn.param("min_vel_x", min_vel_x_, 0.0);
-
-    pn.param("max_vel_y", max_vel_y_, 0.1);
-    pn.param("min_vel_y", min_vel_y_, -0.1);
-
-    pn.param("min_trans_vel", min_vel_trans_, 0.1);
-    pn.param("max_trans_vel", max_vel_trans_, max_vel_x_);
-
-    pn.param("max_rot_vel", max_vel_th_, 1.0);
-    min_vel_th_ = -1.0 * max_vel_th_;
-
-    pn.param("min_rot_vel", min_rot_vel_, 0.4);
-
-    pn.param("sim_time", sim_time_, 1.7);
-    pn.param("sim_granularity", sim_granularity_, 0.025);
-    pn.param("path_distance_bias", pdist_scale_, 32.0);
-    pn.param("goal_distance_bias", gdist_scale_, 24.0);
-    pn.param("occdist_scale", occdist_scale_, 0.01);
-
-    pn.param("stop_time_buffer", stop_time_buffer_, 0.2);
-    pn.param("oscillation_reset_dist", oscillation_reset_dist_, 0.05);
-    pn.param("forward_point_distance", forward_point_distance_, 0.325);
-
-    pn.param("scaling_speed", scaling_speed_, 0.5);
-    pn.param("max_scaling_factor", max_scaling_factor_, 0.5);
-
-    int vx_samp, vy_samp, vth_samp;
-    pn.param("vx_samples", vx_samp, 3);
-    pn.param("vy_samples", vy_samp, 10);
-    pn.param("vth_samples", vth_samp, 20);
-
-    if(vx_samp <= 0){
-      ROS_WARN("You've specified that you don't want any samples in the x dimension. We'll at least assume that you want to sample one value... so we're going to set vx_samples to 1 instead");
-      vx_samp = 1;
-    }
-
-    if(vy_samp <= 0){
-      ROS_WARN("You've specified that you don't want any samples in the y dimension. We'll at least assume that you want to sample one value... so we're going to set vy_samples to 1 instead");
-      vy_samp = 1;
-    }
-
-    if(vth_samp <= 0){
-      ROS_WARN("You've specified that you don't want any samples in the th dimension. We'll at least assume that you want to sample one value... so we're going to set vth_samples to 1 instead");
-      vth_samp = 1;
-    }
-
-    pn.param("sim_period", sim_period_, 0.1);
-
-    vsamples_[0] = vx_samp;
-    vsamples_[1] = vy_samp;
-    vsamples_[2] = vth_samp;
+    dynamic_reconfigure::Server<DWAPlannerConfig>::CallbackType cb = boost::bind(&DWAPlanner::reconfigureCB, this, _1, _2);
+    dsrv_.setCallback(cb);
 
     footprint_spec_ = costmap_ros_->getRobotFootprint();
 
@@ -207,9 +129,6 @@ namespace dwa_local_planner {
 
     prev_stationary_pos_ = Eigen::Vector3f::Zero();
     resetOscillationFlags();
-
-    dynamic_reconfigure::Server<DWAPlannerConfig>::CallbackType cb = boost::bind(&DWAPlanner::reconfigureCB, this, _1, _2);
-    dsrv_.setCallback(cb);
   }
 
   Eigen::Vector3f DWAPlanner::computeNewPositions(const Eigen::Vector3f& pos, 
@@ -223,7 +142,21 @@ namespace dwa_local_planner {
   
   void DWAPlanner::selectBestTrajectory(base_local_planner::Trajectory* &best, base_local_planner::Trajectory* &comp){
     //check if the comp trajectory is better than the current best and, if so, swap them
-    if(comp->cost_ >= 0.0 && (comp->cost_ < best->cost_ || best->cost_ < 0.0)){
+    bool best_valid = best->cost_ >= 0.0;
+    bool best_forward = best->xv_ >= 0.0;
+    bool comp_valid = comp->cost_ >= 0.0;
+    bool comp_forward = comp->xv_ >= 0.0;
+
+    //if we don't have a valid trajecotry... then do nothing
+    if(!comp_valid)
+      return;
+
+    ////check to see if we don't want to score a trajectory that is penalized bc it is negative
+    if(penalize_negative_x_ && best_valid && best_forward && !comp_forward)
+      return;
+
+
+    if(comp_valid && ((comp->cost_ < best->cost_ || !best_valid) || (penalize_negative_x_ && comp_forward && !best_forward))){
       base_local_planner::Trajectory* swap = best;
       best = comp;
       comp = swap;
@@ -265,7 +198,6 @@ namespace dwa_local_planner {
     bool two_point_scoring = true;
     if(sq_dist < forward_point_distance_ * forward_point_distance_)
       two_point_scoring = false;
-
 
     //compute the feasible velocity space based on the rate at which we run
     Eigen::Vector3f max_vel = Eigen::Vector3f::Zero();

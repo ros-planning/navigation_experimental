@@ -135,7 +135,7 @@ namespace dwa_local_planner {
       std::vector<geometry_msgs::PoseStamped> global_plan_;
       dynamic_reconfigure::Server<DWAPlannerConfig> dsrv_;
       boost::mutex configuration_mutex_;
-      bool first_reconfigure_;
+      bool penalize_negative_x_;
   };
 };
 #endif
