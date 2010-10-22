@@ -1,0 +1,7 @@
+<library path="lib/libsbpl_recovery">
+  <class name="sbpl_recovery/SBPLRecovery" type="sbpl_recovery::SBPLRecovery" base_class_type="nav_core::RecoveryBehavior">
+    <description>
+      A recovery behavior that uses the sbpl lattice planner and the pose follower to try to plan in full 3D to get the robot out of really tricky situations.
+    </description>
+  </class>
+</library>
