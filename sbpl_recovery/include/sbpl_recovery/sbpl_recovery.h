@@ -68,7 +68,7 @@ namespace sbpl_recovery
 
       costmap_2d::Costmap2DROS* global_costmap_;
       costmap_2d::Costmap2DROS* local_costmap_;
-      SBPLLatticePlanner global_planner_;
+      sbpl_lattice_planner::SBPLLatticePlanner global_planner_;
       pose_follower::PoseFollower local_planner_;
       bool initialized_;
       ros::Subscriber plan_sub_;

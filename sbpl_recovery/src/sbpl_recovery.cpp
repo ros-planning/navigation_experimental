@@ -174,9 +174,9 @@ namespace sbpl_recovery
       r.sleep();
     }
 
-    if(!local_planner_.isGoalReached())
-      ROS_WARN("The sbpl recovery behavior failed to make it to its desired goal");
-    else
+    if(local_planner_.isGoalReached())
       ROS_INFO("The sbpl recovery behavior made it to its desired goal");
+    else
+      ROS_WARN("The sbpl recovery behavior failed to make it to its desired goal");
   }
 };
