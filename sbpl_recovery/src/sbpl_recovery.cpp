@@ -114,13 +114,13 @@ namespace sbpl_recovery
     //original plan and attempt to plan to it
     for(unsigned int i = 0; i < plan_.poses.size(); ++i)
     {
-      ROS_INFO("SQ Distance: %.2f,  spd: %.2f, start (%.2f, %.2f), goal (%.2f, %.2f)",
+      ROS_DEBUG("SQ Distance: %.2f,  spd: %.2f, start (%.2f, %.2f), goal (%.2f, %.2f)",
           sqDistance(start, plan_.poses[i]),
           sq_planning_distance_,
           start.pose.position.x, start.pose.position.y,
           plan_.poses[i].pose.position.x,
           plan_.poses[i].pose.position.y);
-      if(sqDistance(start, plan_.poses[i]) >= sq_planning_distance_)
+      if(sqDistance(start, plan_.poses[i]) >= sq_planning_distance_ || i == (plan_.poses.size() - 1))
       {
         ROS_INFO("Calling sbpl planner with start (%.2f, %.2f), goal (%.2f, %.2f)",
             start.pose.position.x, start.pose.position.y,
