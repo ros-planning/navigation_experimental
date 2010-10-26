@@ -173,16 +173,31 @@ namespace pose_follower {
     //if it is legal... we'll pass it on
     cmd_vel = test_vel;
 
-    //if we haven't reached our goal... we'll update time
-    if (fabs(diff.linear.x) > tolerance_trans_ || fabs(diff.linear.y) > tolerance_trans_ || fabs(diff.angular.z) > tolerance_rot_)
-      goal_reached_time_ = ros::Time::now();
-    else if(current_waypoint_ < (global_plan_.size() - 1)){
-      //if we're not on the last waypoint... but we've reached the next waypoint in the plan... we'll update our current waypoint
-      goal_reached_time_ = ros::Time::now();
-      current_waypoint_++;
+    bool in_goal_position = false;
+    while(fabs(diff.linear.x) <= tolerance_trans_ &&
+          fabs(diff.linear.y) <= tolerance_trans_ &&
+	  fabs(diff.angular.z) <= tolerance_rot_)
+    {
+      if(current_waypoint_ < global_plan_.size() - 1)
+      {
+	current_waypoint_++;
+        tf::poseStampedMsgToTF(global_plan_[current_waypoint_], target_pose);
+        diff = diff2D(target_pose, robot_pose);
+      }
+      else
+      {
+        ROS_INFO("Reached goal: %d", current_waypoint_);
+        in_goal_position = true;
+        break;
+      }
     }
+
+    //if we're not in the goal position, we need to update time
+    if(!in_goal_position)
+      goal_reached_time_ = ros::Time::now();
+
     //check if we've reached our goal for long enough to succeed
-    else if(goal_reached_time_ + ros::Duration(tolerance_timeout_) < ros::Time::now()){
+    if(goal_reached_time_ + ros::Duration(tolerance_timeout_) < ros::Time::now()){
       geometry_msgs::Twist empty_twist;
       cmd_vel = empty_twist;
     }
