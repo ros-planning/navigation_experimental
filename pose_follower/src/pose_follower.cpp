@@ -283,6 +283,7 @@ namespace pose_follower {
       res.linear.y /= lin_overshoot;
     }
 
+    //we only want to enforce a minimum velocity if we're not rotating in place
     if(lin_undershoot > 1.0)
     {
       res.linear.x *= lin_undershoot;
@@ -292,8 +293,11 @@ namespace pose_follower {
     if (fabs(res.angular.z) > max_vel_th_) res.angular.z = max_vel_th_ * sign(res.angular.z);
     if (fabs(res.angular.z) < min_vel_th_) res.angular.z = min_vel_th_ * sign(res.angular.z);
 
-    if(fabs(res.linear.x) < in_place_trans_vel_ && fabs(res.linear.y) < in_place_trans_vel_){
+    //we want to check for whether or not we're desired to rotate in place
+    if(sqrt(twist.linear.x * twist.linear.x + twist.linear.y * twist.linear.y) < in_place_trans_vel_){
       if (fabs(res.angular.z) < min_in_place_vel_th_) res.angular.z = min_in_place_vel_th_ * sign(res.angular.z);
+      res.linear.x = 0.0;
+      res.linear.y = 0.0;
     }
 
     ROS_DEBUG("Angular command %f", res.angular.z);
