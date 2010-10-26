@@ -62,6 +62,7 @@ namespace sbpl_recovery
     p_nh.param("control_frequency", control_frequency_, 10.0);
     p_nh.param("controller_patience", controller_patience_, 5.0);
     p_nh.param("planning_attempts", planning_attempts_, 3);
+    p_nh.param("attempts_per_run", attempts_per_run_, 3);
     p_nh.param("use_local_frame", use_local_frame_, true);
 
     double planning_distance;
@@ -147,6 +148,7 @@ namespace sbpl_recovery
 
     //first, we want to find a goal point that is far enough away from the robot on the
     //original plan and attempt to plan to it
+    int unsuccessful_attempts = 0;
     for(unsigned int i = 0; i < plan_.poses.size(); ++i)
     {
       ROS_DEBUG("SQ Distance: %.2f,  spd: %.2f, start (%.2f, %.2f), goal (%.2f, %.2f)",
@@ -167,6 +169,11 @@ namespace sbpl_recovery
           return sbpl_plan;
         }
         sbpl_plan.clear();
+
+        //make sure that we don't spend forever planning
+        unsuccessful_attempts++;
+        if(unsuccessful_attempts >= attempts_per_run_)
+          return sbpl_plan;
       }
     }
 
