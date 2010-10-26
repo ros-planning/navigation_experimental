@@ -44,6 +44,7 @@
 #include <sbpl_lattice_planner/sbpl_lattice_planner.h>
 #include <nav_msgs/Path.h>
 #include <boost/thread.hpp>
+#include <base_local_planner/goal_functions.h>
 
 namespace sbpl_recovery
 {
@@ -68,6 +69,7 @@ namespace sbpl_recovery
 
       costmap_2d::Costmap2DROS* global_costmap_;
       costmap_2d::Costmap2DROS* local_costmap_;
+      tf::TransformListener* tf_;
       sbpl_lattice_planner::SBPLLatticePlanner global_planner_;
       pose_follower::PoseFollower local_planner_;
       bool initialized_;
@@ -77,6 +79,7 @@ namespace sbpl_recovery
       nav_msgs::Path plan_;
       double control_frequency_, sq_planning_distance_, controller_patience_;
       int planning_attempts_;
+      bool use_local_frame_;
   };
 
 };

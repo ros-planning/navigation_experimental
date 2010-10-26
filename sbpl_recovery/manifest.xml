@@ -14,6 +14,7 @@
   <depend package="pose_follower"/>
   <depend package="costmap_2d"/>
   <depend package="pluginlib"/>
+  <depend package="base_local_planner"/>
 
   <export>
     <nav_core plugin="${prefix}/recovery_plugin.xml" />

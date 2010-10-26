@@ -45,6 +45,7 @@ namespace sbpl_recovery
   SBPLRecovery::SBPLRecovery():
     global_costmap_(NULL),
     local_costmap_(NULL),
+    tf_(NULL),
     initialized_(false)
   {
   }
@@ -61,6 +62,7 @@ namespace sbpl_recovery
     p_nh.param("control_frequency", control_frequency_, 10.0);
     p_nh.param("controller_patience", controller_patience_, 5.0);
     p_nh.param("planning_attempts", planning_attempts_, 3);
+    p_nh.param("use_local_frame", use_local_frame_, true);
 
     double planning_distance;
     p_nh.param("planning_distance", planning_distance, 2.0);
@@ -69,9 +71,14 @@ namespace sbpl_recovery
     //we need to initialize our costmaps
     global_costmap_ = global_costmap;
     local_costmap_ = local_costmap;
+    tf_ = tf;
 
     //we need to initialize our local and global planners
-    global_planner_.initialize(n + "/sbpl_lattice_planner", global_costmap_);
+    if(use_local_frame_)
+      global_planner_.initialize(n + "/sbpl_lattice_planner", local_costmap_);
+    else
+      global_planner_.initialize(n + "/sbpl_lattice_planner", global_costmap_);
+
     local_planner_.initialize(n + "/pose_follower", tf, local_costmap_);
 
     //we'll need to subscribe to get the latest plan information 
@@ -85,8 +92,25 @@ namespace sbpl_recovery
   void SBPLRecovery::planCB(const nav_msgs::Path::ConstPtr& plan)
   {
     //just copy the plan data over
-    boost::mutex::scoped_lock l(plan_mutex_);
-    plan_ = *plan;
+    if(use_local_frame_)
+    {
+      std::vector<geometry_msgs::PoseStamped> transformed_plan;
+      if(base_local_planner::transformGlobalPlan(*tf_, plan->poses, *local_costmap_, global_costmap_->getGlobalFrameID(), transformed_plan))
+      {
+        boost::mutex::scoped_lock l(plan_mutex_);
+	if(!transformed_plan.empty())
+	  plan_.header = transformed_plan[0].header;
+        plan_.poses = transformed_plan;
+	ROS_ERROR("Transformed plan to frame: %s", plan_.header.frame_id.c_str());
+      }
+      else
+        ROS_WARN("Could not transform to frame of the local recovery");
+    }
+    else
+    {
+      boost::mutex::scoped_lock l(plan_mutex_);
+      plan_ = *plan;
+    }
   }
 
   double SBPLRecovery::sqDistance(const geometry_msgs::PoseStamped& p1, 
@@ -102,10 +126,21 @@ namespace sbpl_recovery
     std::vector<geometry_msgs::PoseStamped> sbpl_plan;
 
     tf::Stamped<tf::Pose> global_pose;
-    if(!global_costmap_->getRobotPose(global_pose))
+    if(use_local_frame_)
     {
-      ROS_ERROR("SBPL recovery behavior could not get the current pose of the robot. Doing nothing.");
-      return sbpl_plan;
+      if(!local_costmap_->getRobotPose(global_pose))
+      {
+        ROS_ERROR("SBPL recovery behavior could not get the current pose of the robot. Doing nothing.");
+        return sbpl_plan;
+      }
+    }
+    else
+    {
+      if(!global_costmap_->getRobotPose(global_pose))
+      {
+        ROS_ERROR("SBPL recovery behavior could not get the current pose of the robot. Doing nothing.");
+        return sbpl_plan;
+      }
     }
 
     geometry_msgs::PoseStamped start;
