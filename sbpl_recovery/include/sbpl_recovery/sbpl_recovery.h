@@ -76,6 +76,7 @@ namespace sbpl_recovery
       boost::mutex plan_mutex_;
       nav_msgs::Path plan_;
       double control_frequency_, sq_planning_distance_, controller_patience_;
+      int planning_attempts_;
   };
 
 };

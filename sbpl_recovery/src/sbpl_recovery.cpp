@@ -60,6 +60,7 @@ namespace sbpl_recovery
     p_nh.param("plan_topic", plan_topic, std::string("NavfnROS/plan"));
     p_nh.param("control_frequency", control_frequency_, 10.0);
     p_nh.param("controller_patience", controller_patience_, 5.0);
+    p_nh.param("planning_attempts", planning_attempts_, 3);
 
     double planning_distance;
     p_nh.param("planning_distance", planning_distance, 2.0);
@@ -148,35 +149,38 @@ namespace sbpl_recovery
 
     ROS_INFO("Starting the sbpl recovery behavior");
 
-    std::vector<geometry_msgs::PoseStamped> sbpl_plan = makePlan();
-
-    if(sbpl_plan.empty())
+    for(int i=0; i <= planning_attempts_; ++i)
     {
-      ROS_ERROR("Unable to find a valid pose to plan to on the global plan.");
-      return;
+      std::vector<geometry_msgs::PoseStamped> sbpl_plan = makePlan();
+
+      if(sbpl_plan.empty())
+      {
+        ROS_ERROR("Unable to find a valid pose to plan to on the global plan.");
+        return;
+      }
+
+      //ok... now we've got a plan so we need to try to follow it
+      local_planner_.setPlan(sbpl_plan);
+      ros::Rate r(control_frequency_);
+      ros::Time last_valid_control = ros::Time::now();
+      while(ros::ok() && 
+          last_valid_control + ros::Duration(controller_patience_) >= ros::Time::now() && 
+          !local_planner_.isGoalReached())
+      {
+        geometry_msgs::Twist cmd_vel;
+        bool valid_control = local_planner_.computeVelocityCommands(cmd_vel);
+
+        if(valid_control)
+          last_valid_control = ros::Time::now();
+
+        vel_pub_.publish(cmd_vel);
+        r.sleep();
+      }
+
+      if(local_planner_.isGoalReached())
+        ROS_INFO("The sbpl recovery behavior made it to its desired goal");
+      else
+        ROS_WARN("The sbpl recovery behavior failed to make it to its desired goal");
     }
-
-    //ok... now we've got a plan so we need to try to follow it
-    local_planner_.setPlan(sbpl_plan);
-    ros::Rate r(control_frequency_);
-    ros::Time last_valid_control = ros::Time::now();
-    while(ros::ok() && 
-        last_valid_control + ros::Duration(controller_patience_) >= ros::Time::now() && 
-        !local_planner_.isGoalReached())
-    {
-      geometry_msgs::Twist cmd_vel;
-      bool valid_control = local_planner_.computeVelocityCommands(cmd_vel);
-
-      if(valid_control)
-        last_valid_control = ros::Time::now();
-
-      vel_pub_.publish(cmd_vel);
-      r.sleep();
-    }
-
-    if(local_planner_.isGoalReached())
-      ROS_INFO("The sbpl recovery behavior made it to its desired goal");
-    else
-      ROS_WARN("The sbpl recovery behavior failed to make it to its desired goal");
   }
 };
