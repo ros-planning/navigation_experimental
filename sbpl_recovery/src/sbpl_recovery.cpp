@@ -200,6 +200,12 @@ namespace sbpl_recovery
         return;
       }
 
+      //if we've got a valid plan, we're going to clear unknown space out to our planning distance
+      //in our costmaps, not the safest thing to do, but we're trying to get out
+      double window_size = 2 * sqrt(sq_planning_distance_);
+      global_costmap_->clearNonLethalWindow(window_size, window_size);
+      local_costmap_->clearNonLethalWindow(window_size, window_size);
+
       //ok... now we've got a plan so we need to try to follow it
       local_planner_.setPlan(sbpl_plan);
       ros::Rate r(control_frequency_);
