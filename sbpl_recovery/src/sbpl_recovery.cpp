@@ -146,10 +146,20 @@ namespace sbpl_recovery
     geometry_msgs::PoseStamped start;
     tf::poseStampedTFToMsg(global_pose, start);
 
-    //first, we want to find a goal point that is far enough away from the robot on the
+    //first, we want to walk far enough along the path that we get to a point
+    //that is within the recovery distance from the robot. Otherwise, we might
+    //move backwards along the plan
+    unsigned int index = 0;
+    for(index=0; index < plan_.poses.size(); ++index)
+    {
+      if(sqDistance(start, plan_.poses[index]) < sq_planning_distance_)
+        break;
+    }
+
+    //next, we want to find a goal point that is far enough away from the robot on the
     //original plan and attempt to plan to it
     int unsuccessful_attempts = 0;
-    for(unsigned int i = 0; i < plan_.poses.size(); ++i)
+    for(unsigned int i = index; i < plan_.poses.size(); ++i)
     {
       ROS_DEBUG("SQ Distance: %.2f,  spd: %.2f, start (%.2f, %.2f), goal (%.2f, %.2f)",
           sqDistance(start, plan_.poses[i]),
