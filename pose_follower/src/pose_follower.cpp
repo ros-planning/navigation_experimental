@@ -75,7 +75,7 @@ namespace pose_follower {
 
     ros::NodeHandle node;
     odom_sub_ = node.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&PoseFollower::odomCallback, this, _1));
-    vel_pub_ = node.advertise<geometry_msgs::Twist>("base_controller/command", 10);
+    vel_pub_ = node.advertise<geometry_msgs::Twist>("cmd_vel", 10);
 
     ROS_DEBUG("Initialized");
   }
