@@ -1,0 +1,73 @@
+define block model
+(
+  size [0.5 0.5 0.75]
+  gui_nose 0
+)
+
+define topurg laser
+(
+  range_min 0.0
+  range_max 30.0
+  fov 270.25
+  samples 1081
+  # generic model properties
+  color "black"
+  size [ 0.05 0.05 0.1 ]
+)
+
+define pr2 position
+(
+  size [0.65 0.65 0.25]
+  origin [-0.05 0 0 0]
+  gui_nose 1
+  drive "omni"
+  topurg(pose [0.275 0.000 0 0.000])
+)
+
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 1
+
+  gui_nose 0
+  gui_grid 0
+#gui_movemask 0
+  gui_outline 0
+  gripper_return 0
+  fiducial_return 0
+  laser_return 1
+)
+
+# set the resolution of the underlying raytrace model in meters
+resolution 0.01
+
+interval_sim 100  # simulation timestep in milliseconds
+#interval_real 100  # real-time interval between simulation updates in milliseconds 
+
+window
+( 
+  size [ 745.000 448.000 ] 
+#center [327.990 371.960] 
+#rotate [ 0.000 -1.560 ]
+  rotate [ 0.000 90.0 ]
+  scale 18.806 
+)
+
+# load an environment bitmap
+floorplan
+( 
+  name "willow"
+  bitmap "willow.pgm"
+#size [58.05 45.625 1.0]
+  size [56.3 45.625 1.0]
+  pose [-22.812 29.250 0 90.000] 
+)
+
+# throw in a robot
+pr2( pose [-27.950 15.629 0 90.0] name "pr2" color "blue")
+block( pose [ -27.924 13.020 0 0.000 ] color "red")
+block( pose [ -27.924 13.020 0 0.000 ] color "red")
+block( pose [ -27.924 13.020 0 0.000 ] color "red")
