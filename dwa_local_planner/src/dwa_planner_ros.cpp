@@ -64,6 +64,8 @@ namespace dwa_local_planner {
       pn.param("rot_stopped_vel", rot_stopped_vel_, 1e-2);
       pn.param("trans_stopped_vel", trans_stopped_vel_, 1e-2);
 
+      pn.param("latch_xy_goal_tolerance", latch_xy_goal_tolerance_, false);
+
       //to get odometry information, we need to get a handle to the topic in the global namespace
       ros::NodeHandle gn;
       odom_sub_ = gn.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&DWAPlannerROS::odomCallback, this, _1));
@@ -232,7 +234,12 @@ namespace dwa_local_planner {
     double goal_th = yaw;
 
     //check to see if we've reached the goal position
-    if(base_local_planner::goalPositionReached(global_pose, goal_x, goal_y, xy_goal_tolerance_)){
+    if(base_local_planner::goalPositionReached(global_pose, goal_x, goal_y, xy_goal_tolerance_) || xy_tolerance_latch_){
+      //if the user wants to latch goal tolerance, if we ever reach the goal location, we'll
+      //just rotate in place
+      if(latch_xy_goal_tolerance_)
+        xy_tolerance_latch_ = true;
+
       //check to see if the goal orientation has been reached
       if(base_local_planner::goalOrientationReached(global_pose, goal_th, yaw_goal_tolerance_)){
         //set the velocity command to zero
@@ -240,6 +247,7 @@ namespace dwa_local_planner {
         cmd_vel.linear.y = 0.0;
         cmd_vel.angular.z = 0.0;
         rotating_to_goal_ = false;
+        xy_tolerance_latch_ = false;
       }
       else {
         //we need to call the next two lines to make sure that the dwa
@@ -348,6 +356,9 @@ namespace dwa_local_planner {
     //reset the global plan
     global_plan_.clear();
     global_plan_ = orig_global_plan;
+
+    //when we get a new plan, we also want to clear any latch we may have on goal tolerances
+    xy_tolerance_latch_ = false;
 
     return true;
   }

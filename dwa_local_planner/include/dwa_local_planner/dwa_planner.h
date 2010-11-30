@@ -54,6 +54,10 @@
 #include <dwa_local_planner/DWAPlannerConfig.h>
 
 namespace dwa_local_planner {
+  /**
+   * @class DWAPlanner
+   * @brief A class implementing the DWA Local Planner
+   */
   class DWAPlanner {
     public:
       DWAPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
