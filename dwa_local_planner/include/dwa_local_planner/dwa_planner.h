@@ -38,7 +38,7 @@
 #define DWA_LOCAL_PLANNER_DWA_PLANNER_H_
 #include <queue>
 #include <vector>
-#include <Eigen/Core>
+#include <Eigen3/Core>
 #include <costmap_2d/costmap_2d.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <tf/transform_listener.h>
@@ -64,37 +64,37 @@ namespace dwa_local_planner {
 
       ~DWAPlanner() {delete world_model_;}
 
-      Eigen::Vector3f computeNewPositions(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel, double dt);
-      void generateTrajectory(Eigen::Vector3f pos, const Eigen::Vector3f& vel, base_local_planner::Trajectory& traj, bool two_point_scoring);
-      base_local_planner::Trajectory computeTrajectories(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel);
-      bool checkTrajectory(const Eigen::Vector3f& pos, const Eigen::Vector3f& vel);
+      Eigen3::Vector3f computeNewPositions(const Eigen3::Vector3f& pos, const Eigen3::Vector3f& vel, double dt);
+      void generateTrajectory(Eigen3::Vector3f pos, const Eigen3::Vector3f& vel, base_local_planner::Trajectory& traj, bool two_point_scoring);
+      base_local_planner::Trajectory computeTrajectories(const Eigen3::Vector3f& pos, const Eigen3::Vector3f& vel);
+      bool checkTrajectory(const Eigen3::Vector3f& pos, const Eigen3::Vector3f& vel);
       base_local_planner::Trajectory findBestPath(tf::Stamped<tf::Pose> global_pose, tf::Stamped<tf::Pose> global_vel, 
           tf::Stamped<tf::Pose>& drive_velocities);
       void updatePlan(const std::vector<geometry_msgs::PoseStamped>& new_plan);
-      Eigen::Vector3f getAccLimits() { return acc_lim_; }
+      Eigen3::Vector3f getAccLimits() { return acc_lim_; }
       double getSimPeriod() { return sim_period_; }
       
 
     private:
       void reconfigureCB(DWAPlannerConfig &config, uint32_t level);
-      double footprintCost(const Eigen::Vector3f& pos, double scale);
+      double footprintCost(const Eigen3::Vector3f& pos, double scale);
       void selectBestTrajectory(base_local_planner::Trajectory* &best, base_local_planner::Trajectory* &comp);
       void resetOscillationFlags();
-      void resetOscillationFlagsIfPossible(const Eigen::Vector3f& pos, const Eigen::Vector3f& prev);
+      void resetOscillationFlagsIfPossible(const Eigen3::Vector3f& pos, const Eigen3::Vector3f& prev);
       bool setOscillationFlags(base_local_planner::Trajectory* t);
-      double headingDiff(double gx, double gy, const Eigen::Vector3f& pos);
+      double headingDiff(double gx, double gy, const Eigen3::Vector3f& pos);
 
       inline double squareDist(const geometry_msgs::PoseStamped& p1, const geometry_msgs::PoseStamped& p2){
         return (p1.pose.position.x - p2.pose.position.x) * (p1.pose.position.x - p2.pose.position.x)
           + (p1.pose.position.y - p2.pose.position.y) * (p1.pose.position.y - p2.pose.position.y);
       }
 
-      inline Eigen::Vector3f getMaxSpeedToStopInTime(double time){
+      inline Eigen3::Vector3f getMaxSpeedToStopInTime(double time){
         return acc_lim_ * std::max(time, 0.0);
       }
 
-      inline double getStopTime(const Eigen::Vector3f& vel){
-        Eigen::Vector3f stop_vec = -2.0 * (vel.cwise() / acc_lim_);
+      inline double getStopTime(const Eigen3::Vector3f& vel){
+        Eigen3::Vector3f stop_vec = -2.0 * (vel.array() / acc_lim_.array());
         double max_time = stop_vec[0];
         for(unsigned int i = 1; i < 3; ++i){
           max_time = std::max(max_time, (double)stop_vec[i]);
@@ -113,15 +113,15 @@ namespace dwa_local_planner {
         return x < 0.0 ? -1.0 : 1.0;
       }
 
-      int getHeadingLookaheadIndex(double dist, const Eigen::Vector3f& pos);
-      bool oscillationCheck(const Eigen::Vector3f& vel);
+      int getHeadingLookaheadIndex(double dist, const Eigen3::Vector3f& pos);
+      bool oscillationCheck(const Eigen3::Vector3f& vel);
 
       base_local_planner::MapGrid map_, front_map_;
       costmap_2d::Costmap2DROS* costmap_ros_;
       costmap_2d::Costmap2D costmap_;
       double stop_time_buffer_;
       double pdist_scale_, gdist_scale_, occdist_scale_, heading_scale_;
-      Eigen::Vector3f acc_lim_, vsamples_, prev_stationary_pos_;
+      Eigen3::Vector3f acc_lim_, vsamples_, prev_stationary_pos_;
       std::vector<geometry_msgs::Point> footprint_spec_;
       base_local_planner::CostmapModel* world_model_;
       double sim_time_, sim_granularity_;
