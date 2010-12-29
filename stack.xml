@@ -7,7 +7,8 @@
   <depend stack="common" /> <!-- actionlib, filters, pluginlib -->
   <depend stack="common_msgs" /> <!-- nav_msgs, sensor_msgs, geometry_msgs -->
   <depend stack="driver_common" /> <!-- dynamic_reconfigure -->
-  <depend stack="geometry" /> <!-- tf, eigen, angles, eigen3 -->
+  <depend stack="geometry" /> <!-- tf, eigen, angles -->
+  <depend stack="geometry_experimental" /> <!-- eigen3 -->
   <depend stack="motion_planners" /> <!-- sbpl -->
   <depend stack="navigation" /> <!-- move_base_msgs, nav_core, base_local_planner, costmap_2d -->
   <depend stack="ros" /> <!-- roslib, roscpp, message_filters -->
