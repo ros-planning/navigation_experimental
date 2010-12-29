@@ -70,7 +70,7 @@ namespace assisted_teleop {
   void AssistedTeleop::controlLoop(){
     ros::Rate r(controller_frequency_);
     while(ros::ok()){
-      Eigen::Vector3f desired_vel = Eigen::Vector3f::Zero();
+      Eigen3::Vector3f desired_vel = Eigen3::Vector3f::Zero();
 
       //we'll copy over odometry and velocity data for planning
       {
@@ -95,13 +95,13 @@ namespace assisted_teleop {
       double dx = desired_vel[0] / double(num_x_samples_);
       double start_th = desired_vel[2] - theta_range_ / 2.0 ;
 
-      Eigen::Vector3f best = Eigen::Vector3f::Zero();
+      Eigen3::Vector3f best = Eigen3::Vector3f::Zero();
       double best_dist = DBL_MAX;
       bool trajectory_found = false;
 
       //if we don't have a valid trajectory... we'll start checking others in the angular range specified
       for(int i = 0; i < num_x_samples_; ++i){
-        Eigen::Vector3f check_vel = Eigen::Vector3f::Zero();
+        Eigen3::Vector3f check_vel = Eigen3::Vector3f::Zero();
         check_vel[0] = desired_vel[0] - i * dx;
         check_vel[1] = desired_vel[1];
         check_vel[2] = start_th;
@@ -109,7 +109,7 @@ namespace assisted_teleop {
           check_vel[2] = start_th + j * dth;
           if(planner_.checkTrajectory(check_vel[0], check_vel[1], check_vel[2], false)){
             //if we have a legal trajectory, we'll score it based on its distance to our desired velocity
-            Eigen::Vector3f diffs = (desired_vel - check_vel);
+            Eigen3::Vector3f diffs = (desired_vel - check_vel);
             double sq_dist = diffs[0] * diffs[0] + diffs[1] * diffs[1] + diffs[2] * diffs[2];
 
             //if we have a trajectory that is better than our best one so far, we'll take it
