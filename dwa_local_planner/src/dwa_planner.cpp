@@ -92,8 +92,6 @@ namespace dwa_local_planner {
       config.vth_samples = vth_samp;
     }
 
-    sim_period_ = config.sim_period;
-
     vsamples_[0] = vx_samp;
     vsamples_[1] = vy_samp;
     vsamples_[2] = vth_samp;
@@ -119,7 +117,6 @@ namespace dwa_local_planner {
     //Assuming this planner is being run within the navigation stack, we can
     //just do an upward search for the frequency at which its being run. This
     //also allows the frequency to be overwritten locally.
-    /*
     std::string controller_frequency_param_name;
     if(!pn.searchParam("controller_frequency", controller_frequency_param_name))
       sim_period_ = 0.05;
@@ -135,7 +132,7 @@ namespace dwa_local_planner {
         sim_period_ = 0.05;
       }
     }
-    */
+    ROS_INFO("Sim period is set to %.2f", sim_period_);
 
     acc_lim_[0] = acc_lim_x;
     acc_lim_[1] = acc_lim_y;
