@@ -578,42 +578,4 @@ namespace dwa_local_planner {
 
     return best;
   }
-
-  double DWAPlanner::headingDiff(double gx, double gy, const Eigen3::Vector3f& pos){
-    Eigen3::Vector2f v1(gx - pos[0], gy -pos[1]);
-    Eigen3::Vector2f v2(cos(pos[2]), sin(pos[2]));
-
-    v1.normalize();
-    v2.normalize();
-    double dot = v1.dot(v2);
-    double perp_dot = v1[0] * v2[1] - v1[1] * v2[0];
-    return atan2(perp_dot, dot);
-
-    //double v1_x = gx - pos[0];
-    //double v1_y = gy - pos[1];
-    //double v2_x = cos(pos[2]);
-    //double v2_y = sin(pos[2]);
-
-    //double perp_dot = v1_x * v2_y - v1_y * v2_x;
-    //double dot = v1_x * v2_x + v1_y * v2_y;
-
-    ////get the signed angle
-    //double vector_angle = atan2(perp_dot, dot);
-
-    //double heading_diff = abs(vector_angle);
-    //return heading_diff;
-  }
-
-  int DWAPlanner::getHeadingLookaheadIndex(double lookahead_dist, const Eigen3::Vector3f& pos){
-    // move back on the global plan until we reach the first point within the
-    // distance of the robot
-    for(int i = global_plan_.size() - 1; i >= 0; --i){
-      double sq_dist = (pos[0] - global_plan_[i].pose.position.x) * (pos[0] - global_plan_[i].pose.position.x) 
-        + (pos[1] - global_plan_[i].pose.position.y) * (pos[1] - global_plan_[i].pose.position.y);
-      if(sq_dist <= (lookahead_dist * lookahead_dist)){
-        return i;
-      }
-    }
-    return -1;
-  }
 };

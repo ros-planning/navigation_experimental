@@ -56,64 +56,154 @@
 namespace dwa_local_planner {
   /**
    * @class DWAPlanner
-   * @brief A class implementing the DWA Local Planner
+   * @brief A class implementing a local planner using the Dynamic Window Approach
    */
   class DWAPlanner {
     public:
+      /**
+       * @brief  Constructor for the planner
+       * @param name The name of the planner 
+       * @param costmap_ros A pointer to the costmap instance the planner should use
+       */
       DWAPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
 
+      /**
+       * @brief  Destructor for the planner
+       */
       ~DWAPlanner() {delete world_model_;}
 
+      /**
+       * @brief  Given a current position, velocity, and timestep... compute a new position
+       * @param  pos The current position
+       * @param  vel The current velocity
+       * @param  dt The timestep
+       * @return The new position after applying the velocity for a timestep
+       */
       Eigen3::Vector3f computeNewPositions(const Eigen3::Vector3f& pos, const Eigen3::Vector3f& vel, double dt);
+
+
+      /**
+       * @brief  Given the current position of the robot and a desired velocity, generate and score a trajectory for the given velocity
+       * @param pos The current position of the robot 
+       * @param vel The desired velocity for the trajectory
+       * @param traj A reference to the Trajectory to be populated. A cost >= 0 for the trajectory means that it is valid.
+       * @param two_point_scoring Whether to score the trajectory based on the
+       * center point of the robot and a point directly in front of the center
+       * point, or to score the trajectory only basaed on the center point of the robot
+       */
       void generateTrajectory(Eigen3::Vector3f pos, const Eigen3::Vector3f& vel, base_local_planner::Trajectory& traj, bool two_point_scoring);
+
+      /**
+       * @brief  Given the current position and velocity of the robot, computes
+       * and scores a number of possible trajectories to execute, returning the
+       * best option
+       * @param  pos The current position of the robot
+       * @param  vel The current velocity of the robot
+       * @return The highest scoring trajectory, a cost >= 0 corresponds to a valid trajectory
+       */
       base_local_planner::Trajectory computeTrajectories(const Eigen3::Vector3f& pos, const Eigen3::Vector3f& vel);
+
+      /**
+       * @brief  Check if a trajectory is legal for a position/velocity pari
+       * @param pos The robot's position 
+       * @param vel The desired velocity
+       * @return True if the trajectory is valid, false otherwise
+       */
       bool checkTrajectory(const Eigen3::Vector3f& pos, const Eigen3::Vector3f& vel);
+
+      /**
+       * @brief Given the current position and velocity of the robot, find the best trajectory to exectue
+       * @param global_pose The current position of the robot 
+       * @param global_vel The current velocity of the robot 
+       * @param drive_velocities The velocities to send to the robot base
+       * @return The highest scoring trajectory. A cost >= 0 means the trajectory is legal to execute.
+       */
       base_local_planner::Trajectory findBestPath(tf::Stamped<tf::Pose> global_pose, tf::Stamped<tf::Pose> global_vel, 
           tf::Stamped<tf::Pose>& drive_velocities);
+
+      /**
+       * @brief  Take in a new global plan for the local planner to follow
+       * @param  new_plan The new global plan
+       */
       void updatePlan(const std::vector<geometry_msgs::PoseStamped>& new_plan);
+
+      /**
+       * @brief  Get the acceleration limits of the robot
+       * @return  The acceleration limits of the robot
+       */
       Eigen3::Vector3f getAccLimits() { return acc_lim_; }
+
+      /**
+       * @brief Get the amount of time that trajectories are forward simulated for
+       * @return The simulation period
+       */
       double getSimPeriod() { return sim_period_; }
       
 
     private:
+      /**
+       * @brief  Callback to update the local planner's parameters based on dynamic reconfigure
+       */
       void reconfigureCB(DWAPlannerConfig &config, uint32_t level);
-      double footprintCost(const Eigen3::Vector3f& pos, double scale);
-      void selectBestTrajectory(base_local_planner::Trajectory* &best, base_local_planner::Trajectory* &comp);
-      void resetOscillationFlags();
-      void resetOscillationFlagsIfPossible(const Eigen3::Vector3f& pos, const Eigen3::Vector3f& prev);
-      bool setOscillationFlags(base_local_planner::Trajectory* t);
-      double headingDiff(double gx, double gy, const Eigen3::Vector3f& pos);
 
+      /**
+       * @brief  Given a position for the robot and a scale for the footprint, compute a cost
+       * @param pos The pose of the robot
+       * @param scale The scaling factor for the footprint
+       * @return  A cost for the footprint... >= 0 is legal
+       */
+      double footprintCost(const Eigen3::Vector3f& pos, double scale);
+
+      /**
+       * @brief  Given two trajectories to compare... select the best one
+       * @param  best The current best trajectory, will be set to the new best trajectory if comp scores higher
+       * @param  comp The trajectory to compare to the current best trajectory
+       */
+      void selectBestTrajectory(base_local_planner::Trajectory* &best, base_local_planner::Trajectory* &comp);
+
+      /**
+       * @brief  Reset the oscillation flags for the local planner
+       */
+      void resetOscillationFlags();
+
+      /**
+       * @brief  Given the robot's current position and the position where
+       * oscillation flags were last set, check to see if the robot had moved
+       * far enough to reset them.
+       * @param  pos The current position of the robot
+       * @param  prev The position at which the oscillation flags were last set
+       * @return 
+       */
+      void resetOscillationFlagsIfPossible(const Eigen3::Vector3f& pos, const Eigen3::Vector3f& prev);
+
+      /**
+       * @brief  Given a trajectory that's selected, set flags if needed to
+       * prevent the robot from oscillating
+       * @param  t The selected trajectory
+       * @return True if a flag was set, false otherwise
+       */
+      bool setOscillationFlags(base_local_planner::Trajectory* t);
+
+      /**
+       * @brief Compute the square distance between two poses
+       */
       inline double squareDist(const geometry_msgs::PoseStamped& p1, const geometry_msgs::PoseStamped& p2){
         return (p1.pose.position.x - p2.pose.position.x) * (p1.pose.position.x - p2.pose.position.x)
           + (p1.pose.position.y - p2.pose.position.y) * (p1.pose.position.y - p2.pose.position.y);
       }
 
+      /**
+       * @brief Given a time and the robot's acceleration limits, get the
+       * maximum velocity for the robot to be able to stop in the alloted time
+       * period
+       */
       inline Eigen3::Vector3f getMaxSpeedToStopInTime(double time){
         return acc_lim_ * std::max(time, 0.0);
       }
 
-      inline double getStopTime(const Eigen3::Vector3f& vel){
-        Eigen3::Vector3f stop_vec = -2.0 * (vel.array() / acc_lim_.array());
-        double max_time = stop_vec[0];
-        for(unsigned int i = 1; i < 3; ++i){
-          max_time = std::max(max_time, (double)stop_vec[i]);
-        }
-        return max_time;
-      }
-
-      inline double yFromElipse(double a, double b, double x){
-        double y_squared = (1.0 - (x * x) / (a * a)) * (b * b);
-        if(y_squared < 0.0)
-          return 0.0;
-        return sqrt(y_squared);
-      }
-
-      double sign(double x){
-        return x < 0.0 ? -1.0 : 1.0;
-      }
-
-      int getHeadingLookaheadIndex(double dist, const Eigen3::Vector3f& pos);
+      /**
+       * @brief  For a given velocity, check it it is illegal because of the oscillation flags set
+       */
       bool oscillationCheck(const Eigen3::Vector3f& vel);
 
       base_local_planner::MapGrid map_, front_map_;
