@@ -116,6 +116,27 @@ namespace dwa_local_planner {
     pn.param("acc_lim_y", acc_lim_y, 2.5);
     pn.param("acc_lim_th", acc_lim_th, 3.2);
 
+    //Assuming this planner is being run within the navigation stack, we can
+    //just do an upward search for the frequency at which its being run. This
+    //also allows the frequency to be overwritten locally.
+    /*
+    std::string controller_frequency_param_name;
+    if(!pn.searchParam("controller_frequency", controller_frequency_param_name))
+      sim_period_ = 0.05;
+    else
+    {
+      double controller_frequency = 0;
+      pn.param(controller_frequency_param_name, controller_frequency, 20.0);
+      if(controller_frequency > 0)
+        sim_period_ = 1.0 / controller_frequency;
+      else
+      {
+        ROS_WARN("A controller_frequency less than 0 has been set. Ignoring the parameter, assuming a rate of 20Hz");
+        sim_period_ = 0.05;
+      }
+    }
+    */
+
     acc_lim_[0] = acc_lim_x;
     acc_lim_[1] = acc_lim_y;
     acc_lim_[2] = acc_lim_th;

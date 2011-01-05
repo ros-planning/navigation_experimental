@@ -134,7 +134,7 @@ namespace dwa_local_planner {
       Eigen3::Vector3f getAccLimits() { return acc_lim_; }
 
       /**
-       * @brief Get the amount of time that trajectories are forward simulated for
+       * @brief Get the period at which the local planner is expected to run
        * @return The simulation period
        */
       double getSimPeriod() { return sim_period_; }

@@ -70,7 +70,7 @@ namespace dwa_local_planner {
       ros::NodeHandle gn;
       odom_sub_ = gn.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&DWAPlannerROS::odomCallback, this, _1));
 
-      pn.param("max_rotational_vel", max_vel_th_, 1.0);
+      pn.param("max_rot_vel", max_vel_th_, 1.0);
       min_vel_th_ = -1.0 * max_vel_th_;
 
       pn.param("min_rot_vel", min_rot_vel_, 0.4);
