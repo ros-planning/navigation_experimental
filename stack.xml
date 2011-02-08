@@ -6,7 +6,6 @@
   <url>http://ros.org/wiki/navigation_experimental</url>
   <depend stack="common" /> <!-- actionlib, filters, pluginlib -->
   <depend stack="common_msgs" /> <!-- nav_msgs, sensor_msgs, geometry_msgs -->
-  <depend stack="driver_common" /> <!-- dynamic_reconfigure -->
   <depend stack="geometry" /> <!-- tf, angles -->
   <depend stack="geometry_experimental" /> <!-- eigen3 -->
   <depend stack="motion_planners" /> <!-- sbpl -->
