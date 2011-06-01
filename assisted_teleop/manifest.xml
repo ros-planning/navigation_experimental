@@ -18,7 +18,7 @@
   <depend package="message_filters"/>
   <depend package="base_local_planner"/>
   <depend package="angles"/>
-  <depend package="eigen3"/>
+  <depend package="eigen"/>
   <depend package="pluginlib"/>
   <depend package="sensor_msgs"/>
   <depend package="filters"/>

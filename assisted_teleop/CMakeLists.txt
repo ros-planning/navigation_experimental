@@ -29,11 +29,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_library(trajectory src/trajectory.cpp)
-
-rosbuild_add_executable(anti_collision_base_controller src/anti_collision_base_controller.cpp)
-target_link_libraries(anti_collision_base_controller trajectory)
-
 rosbuild_add_executable(assisted_teleop src/assisted_teleop.cpp)
 
 rosbuild_add_library(laser_scan_filters src/laser_scan_filters.cpp)

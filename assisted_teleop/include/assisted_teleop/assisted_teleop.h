@@ -42,7 +42,7 @@
 #include <base_local_planner/trajectory_planner_ros.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
-#include <Eigen3/Core>
+#include <Eigen/Core>
 
 namespace assisted_teleop {
   class AssistedTeleop {
