@@ -358,16 +358,21 @@ bool EBandTrajectoryCtrl::getTwist(geometry_msgs::Twist& twist_cmd)
           control_deviation.angular.z = vel*mult;
           const double abs_vel = fabs(control_deviation.angular.z);
 
-          ROS_DEBUG_NAMED ("controller_state", "Angular diff is %.2f and desired angular vel is %.2f."
-                           " Initial translation velocity is %.2f, %.2f", angular_diff,
-                           control_deviation.angular.z, control_deviation.linear.x,
-                           control_deviation.linear.y);
+          ROS_DEBUG_THROTTLE_NAMED (1.0, "controller_state",
+                                    "Angular diff is %.2f and desired angular "
+                                    "vel is %.2f.  Initial translation velocity "
+                                    "is %.2f, %.2f", angular_diff,
+                                    control_deviation.angular.z,
+                                    control_deviation.linear.x,
+                                    control_deviation.linear.y);
           const double trans_mult = max(0.01, 1.0 - abs_vel/max_vel_th_); // There are some weird tf errors if I let it be 0
           control_deviation.linear.x *= trans_mult;
           control_deviation.linear.y *= trans_mult;
-          ROS_DEBUG_NAMED ("controller_state", "Translation multiplier is %.2f and scaled translational"
-                           " velocity is %.2f, %.2f", trans_mult, control_deviation.linear.x,
-                           control_deviation.linear.y);
+          ROS_DEBUG_THROTTLE_NAMED (1.0, "controller_state",
+                                    "Translation multiplier is %.2f and scaled "
+                                    "translational velocity is %.2f, %.2f",
+                                    trans_mult, control_deviation.linear.x,
+                                    control_deviation.linear.y);
         }
 
         
@@ -479,22 +484,31 @@ bool EBandTrajectoryCtrl::getTwist(geometry_msgs::Twist& twist_cmd)
 	{
 		if(curr_target_bubble < ((int) elastic_band_.size()) - 1)
 		{
-			curr_target_bubble++;
-			// transform next target bubble into robot-body frame and get difference to robot bubble
-			bubble_diff = getFrame1ToFrame2InRefFrame(elastic_band_.at(0).center.pose, elastic_band_.at(curr_target_bubble).center.pose,
-														ref_frame_band_);
+                  curr_target_bubble++;
+                  ROS_DEBUG_STREAM_THROTTLE_NAMED (1.0, "controller_state",
+                                                   "Target bubble is now " <<
+                                                   curr_target_bubble);
+                  // transform next target bubble into robot-body frame
+                  // and get difference to robot bubble
+                  bubble_diff = getFrame1ToFrame2InRefFrame(elastic_band_.at(0).center.pose, elastic_band_.at(curr_target_bubble).center.pose,
+                                                            ref_frame_band_);
 		}
 		else
 		{
-			// goal position reached
-			robot_cmd.linear.x = 0.0;
-			robot_cmd.linear.y = 0.0;
-			robot_cmd.angular.z = 0.0;
-			// reset velocity
-			last_vel_.linear.x = 0.0;
-			last_vel_.linear.y = 0.0;
-			last_vel_.angular.z = 0.0;
-			break;
+                  ROS_DEBUG_THROTTLE_NAMED (1.0, "controller_state",
+                                            "Goal reached with distance %.2f, %.2f, %.2f"
+                                            "; sending zero velocity",
+                                            bubble_diff.linear.x, bubble_diff.linear.y,
+                                            bubble_diff.angular.z);
+                  // goal position reached
+                  robot_cmd.linear.x = 0.0;
+                  robot_cmd.linear.y = 0.0;
+                  robot_cmd.angular.z = 0.0;
+                  // reset velocity
+                  last_vel_.linear.x = 0.0;
+                  last_vel_.linear.y = 0.0;
+                  last_vel_.angular.z = 0.0;
+                  break;
 		}
 	}
 
