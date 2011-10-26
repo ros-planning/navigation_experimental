@@ -357,7 +357,7 @@ bool EBandPlannerROS::isGoalReached()
 	nav_msgs::Odometry base_odom;
 	{
 		// make sure we do not read new date from topic right at the moment
-		boost::recursive_mutex::scoped_lock(odom_lock_);
+		boost::recursive_mutex::scoped_lock lock(odom_lock_);
 		base_odom = base_odom_;
 	}
 
@@ -370,7 +370,7 @@ bool EBandPlannerROS::isGoalReached()
 void EBandPlannerROS::odomCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
 	// lock Callback while reading data from topic
-    boost::mutex::scoped_lock(odom_mutex_);
+    boost::mutex::scoped_lock lock(odom_mutex_);
 
 	// get odometry and write it to member variable (we assume that the odometry is published in the frame of the base)
 	base_odom_.twist.twist.linear.x = msg->twist.twist.linear.x;
