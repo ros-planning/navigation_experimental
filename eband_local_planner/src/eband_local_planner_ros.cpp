@@ -357,7 +357,7 @@ bool EBandPlannerROS::isGoalReached()
 	nav_msgs::Odometry base_odom;
 	{
 		// make sure we do not read new date from topic right at the moment
-		boost::recursive_mutex::scoped_lock lock(odom_lock_);
+		boost::mutex::scoped_lock lock(odom_mutex_);
 		base_odom = base_odom_;
 	}
 
