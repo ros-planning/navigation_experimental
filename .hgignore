@@ -5,9 +5,4 @@ build
 msg_gen
 eband_local_planner/src/eband_local_planner
 bin
-eband_local_planner/msg/FollowBaseTrajectoryActionFeedback.msg
-eband_local_planner/msg/FollowBaseTrajectoryActionGoal.msg
-eband_local_planner/msg/FollowBaseTrajectoryActionResult.msg
-eband_local_planner/msg/FollowBaseTrajectoryFeedback.msg
-eband_local_planner/msg/FollowBaseTrajectoryGoal.msg
-eband_local_planner/msg/FollowBaseTrajectoryResult.msg
+eband_local_planner/msg/FollowBaseTrajectory*
