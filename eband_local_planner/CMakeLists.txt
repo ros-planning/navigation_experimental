@@ -16,18 +16,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 #set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-#uncomment if you have defined messages
-#rosbuild_genmsg()
-#uncomment if you have defined services
-#rosbuild_gensrv()
-
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#rosbuild_add_executable(example examples/example.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+rosbuild_genmsg()
 
 # we are using the boost::bind library
 rosbuild_add_boost_directories()
@@ -36,3 +25,6 @@ rosbuild_add_boost_directories()
 rosbuild_add_library(eband_local_planner src/eband_local_planner_ros.cpp src/eband_local_planner.cpp src/conversions_and_types.cpp src/eband_visualization.cpp src/eband_trajectory_controller.cpp)
 
 rosbuild_download_data(https://code.ros.org/svn/data/trunk/willow_maps/willow-full-0.025.pgm launch/stage_launch/willow-full-0.025.pgm e66b17ee374f2d7657972efcb3e2e4f7)
+
+rosbuild_add_executable(eband_action src/eband_action.cpp)
+target_link_libraries(eband_action eband_local_planner)
