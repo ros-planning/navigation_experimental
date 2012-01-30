@@ -356,7 +356,7 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
 
   //create a message for the plan 
   nav_msgs::Path gui_path;
-  gui_path.set_poses_size(sbpl_path.size());
+  gui_path.poses.resize(sbpl_path.size());
   gui_path.header.frame_id = costmap_ros_->getGlobalFrameID();
   gui_path.header.stamp = plan_time;
   for(unsigned int i=0; i<sbpl_path.size(); i++){

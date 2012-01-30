@@ -24,11 +24,12 @@
   <depend package="tf" />
   <depend package="tf_conversions" />
   <depend package="angles"/>
-  <depend package="eigen" />
 
   <depend package="control_toolbox"/>
 
   <depend package="actionlib"/>
+
+  <rosdep name="eigen" />
 
   <export>
     <cpp cflags="-I${prefix}/include -I${prefix}/msg/cpp" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -leband_local_planner"/>
