@@ -4,7 +4,6 @@
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/navigation_experimental</url>
-  <depend stack="arm_navigation" /> <!-- sbpl -->
   <depend stack="common" /> <!-- actionlib -->
   <depend stack="common_msgs" /> <!-- nav_msgs, sensor_msgs, geometry_msgs, visualization_msgs -->
   <depend stack="filters" /> <!-- filters -->
