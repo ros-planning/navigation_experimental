@@ -11,8 +11,10 @@ set(ROS_BUILD_TYPE Release)
 
 rosbuild_init()
 
-find_package(sbpl REQUIRED)
-include_directories(${sbpl_INCLUDE_DIRS})
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SBPL REQUIRED sbpl)
+include_directories(${SBPL_INCLUDE_DIRS})
+link_directories(${SBPL_LIBRARY_DIRS})
 
 #set the default path for built executables to the "bin" directory
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
@@ -33,4 +35,4 @@ rosbuild_genmsg()
 #target_link_libraries(example ${PROJECT_NAME})
 
 rosbuild_add_library(${PROJECT_NAME} src/sbpl_lattice_planner.cpp)
-target_link_libraries(${PROJECT_NAME} ${sbpl_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${SBPL_LIBRARIES})
