@@ -182,6 +182,7 @@ void Node::execute (const GoalPtr& goal)
     ROS_DEBUG_STREAM_THROTTLE_NAMED (1.0, "control", "Sending control " << vel);
     vel_pub_.publish(vel);
     last_valid_control_ = ros::Time::now();
+    ros::spinOnce();
     control_rate_.sleep();
   }
 

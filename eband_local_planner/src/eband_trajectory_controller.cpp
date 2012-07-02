@@ -95,7 +95,7 @@ void EBandTrajectoryCtrl::initialize(std::string name, costmap_2d::Costmap2DROS*
 		node_private.param("max_translational_acceleration", acc_max_trans_, 0.5);
 		node_private.param("max_rotational_acceleration", acc_max_rot_, 1.5);
 
-                node_private.param("rotation_correction_threshold", rotation_correction_threshold_, 0.1);
+                node_private.param("rotation_correction_threshold", rotation_correction_threshold_, 0.5);
 
 		// copy adress of costmap and Transform Listener (handed over from move_base)
 		costmap_ros_ = costmap_ros;
@@ -374,7 +374,11 @@ bool EBandTrajectoryCtrl::getTwist(geometry_msgs::Twist& twist_cmd)
                                     trans_mult, control_deviation.linear.x,
                                     control_deviation.linear.y);
         }
-
+        else
+          ROS_DEBUG_THROTTLE_NAMED (1.0, "angle_correction",
+                                    "Not applying angle correction because "
+                                    "distance to goal is %.2f", dist_to_goal);
+                                    
         
 
 
