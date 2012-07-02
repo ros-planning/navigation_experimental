@@ -1897,14 +1897,14 @@ bool EBandPlanner::convertPlanToBand(std::vector<geometry_msgs::PoseStamped> pla
 		if(!calcObstacleKinematicDistance(tmp_band[i].center.pose, distance))
 		{
 			// frame must not be immediately in collision -> otherwise calculation of gradient will later be invalid
-			ROS_DEBUG("Calculation of Distance between bubble and nearest obstacle failed. Frame %d of %d outside map", i, ((int) plan.size()) );
+			ROS_INFO("Calculation of Distance between bubble and nearest obstacle failed. Frame %d of %d outside map", i, ((int) plan.size()) );
 			return false;
 		}
 
 		if(distance <= 0.0)
 		{
 			// frame must not be immediately in collision -> otherwise calculation of gradient will later be invalid
-			ROS_DEBUG("Calculation of Distance between bubble and nearest obstacle failed. Frame %d of %d in collision. Plan invalid", i, ((int) plan.size()) );
+			ROS_INFO("Calculation of Distance between bubble and nearest obstacle failed. Frame %d of %d in collision. Plan invalid", i, ((int) plan.size()) );
 			// TODO if frame in collision try to repair band instaed of aborting averything
 			return false;
 		}
