@@ -1,45 +1,24 @@
 <launch>
+  <node type="teleop_gripper" pkg="pr2_teleop" name="teleop_gripper_right" output="screen">
+    <param name="open_button" type="int" value="13" />
+    <param name="close_button" type="int" value="15" />
+    <remap from="command" to="r_gripper_controller/command" />
+  </node>
 
-  <!-- EXAMPLE NODES IN COMMENTS MAY NOT EXIST
-  <node pkg="joy" type="joy" name="joystick">
-    <param name="dev" type="string" value="/dev/input/js0" />
-    <param name="deadzone" value="0.12" />
-    <param name="autorepeat_rate" value="7" />
-    <param name="coalesce_interval" value="0.05" />
+  <node type="teleop_gripper" pkg="pr2_teleop" name="teleop_gripper_left" output="screen">
+    <param name="open_button" type="int" value="5" />
+    <param name="close_button" type="int" value="7" />
+    <remap from="command" to="l_gripper_controller/command" />
   </node>
 
   <node pkg="pr2_teleop" type="teleop_pr2" name="pr2_teleop" output="screen">
-    <remap from="cmd_vel" to="teleop_cmd_vel" />
-
-    <param name="axis_vx" value="3" type="int"/>
-    <param name="axis_vy" value="2" type="int"/>
-    <param name="axis_vw" value="0" type="int"/>
-    <param name="axis_pan" value="0" type="int"/>
-    <param name="axis_tilt" value="3" type="int"/>
-
-    <param name="max_vw" value="0.8" />
-    <param name="max_vx" value="0.5" />
-    <param name="max_vy" value="0.5" />
-    <param name="max_vw_run" value="1.4" />
-    <param name="max_vx_run" value="1.0" />
-    <param name="max_vy_run" value="1.0" />
- 
-    <param name="max_pan" value="2.7" />
-    <param name="max_tilt" value="1.4" />
-    <param name="min_tilt" value="-0.4" />
-    <param name="tilt_step" value="0.3" />
-    <param name="pan_step" value="0.3" />
-
-    <param name="run_button" value="11" type="int" />
-    <param name="torso_dn_button" value="14" type="int" />
-    <param name="torso_up_button" value="12" type="int" />
-    <param name="head_button" value="8" type="int" />
-    <param name="deadman_button" value="10" type="int"/>
-
+    <remap from="cmd_vel" to="teleop/command" />
+    <rosparam file="$(find pr2_teleop)/config/teleop.yaml" command="load" />
   </node>
-  -->
 
   <node pkg="assisted_teleop" name="assisted_teleop" type="assisted_teleop" respawn="false" output="screen">
     <rosparam file="$(find assisted_teleop)/launch/assisted_teleop.yaml" command="load" />
+    <remap from="teleop_cmd_vel" to="teleop/command" />
+    <remap from="cmd_vel" to="base_controller/command" />
   </node>
 </launch>
