@@ -368,7 +368,7 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
     pose.pose.position.y = sbpl_path[i].y + cost_map_.getOriginY();
     pose.pose.position.z = start.pose.position.z;
 
-    btQuaternion temp;
+    tf::Quaternion temp;
     temp.setEulerZYX(sbpl_path[i].theta,0,0);
     pose.pose.orientation.x = temp.getX();
     pose.pose.orientation.y = temp.getY();
