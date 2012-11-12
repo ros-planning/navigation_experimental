@@ -34,6 +34,7 @@
  *
  * Author: Eitan Marder-Eppstein
  *********************************************************************/
+
 #include <sbpl_recovery/sbpl_recovery.h>
 #include <pluginlib/class_list_macros.h>
 
@@ -93,10 +94,17 @@ namespace sbpl_recovery
   void SBPLRecovery::planCB(const nav_msgs::Path::ConstPtr& plan)
   {
     //just copy the plan data over
+
+    tf::Stamped<tf::Pose> global_pose;
+    !local_costmap_->getRobotPose(global_pose);
+
+    costmap_2d::Costmap2D costmap;
+    local_costmap_->getCostmapCopy(costmap);
+
     if(use_local_frame_)
     {
       std::vector<geometry_msgs::PoseStamped> transformed_plan;
-      if(base_local_planner::transformGlobalPlan(*tf_, plan->poses, *local_costmap_, local_costmap_->getGlobalFrameID(), transformed_plan))
+      if(base_local_planner::transformGlobalPlan(*tf_, plan->poses, global_pose, costmap, local_costmap_->getGlobalFrameID(), transformed_plan))
       {
         boost::mutex::scoped_lock l(plan_mutex_);
         if(!transformed_plan.empty())

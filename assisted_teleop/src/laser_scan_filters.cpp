@@ -40,5 +40,5 @@
 
 #include "pluginlib/class_list_macros.h"
 
-//PLUGINLIB_DECLARE_CLASS(assisted_teleop, LaserScanMaxRangeFilter, assisted_teleop::LaserScanMaxRangeFilter, filters::FilterBase<sensor_msgs::LaserScan>)
-PLUGINLIB_REGISTER_CLASS(LaserScanMaxRangeFilter, assisted_teleop::LaserScanMaxRangeFilter, filters::FilterBase<sensor_msgs::LaserScan>)
+PLUGINLIB_DECLARE_CLASS(assisted_teleop, LaserScanMaxRangeFilter, assisted_teleop::LaserScanMaxRangeFilter, filters::FilterBase<sensor_msgs::LaserScan>)
+//PLUGINLIB_REGISTER_CLASS(LaserScanMaxRangeFilter, assisted_teleop::LaserScanMaxRangeFilter, filters::FilterBase<sensor_msgs::LaserScan>)
