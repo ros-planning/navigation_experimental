@@ -1,8 +1,0 @@
-build
-.*so
-.*~
-.*pgm
-msg_gen
-eband_local_planner/src/eband_local_planner
-bin
-eband_local_planner/msg/FollowBaseTrajectory*

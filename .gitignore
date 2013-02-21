@@ -1,0 +1,42 @@
+build
+.*so
+.*~
+.*pgm
+msg_gen
+eband_local_planner/src/eband_local_planner
+bin
+eband_local_planner/msg/FollowBaseTrajectory*
+
+#github standard C .gitignore
+# Object files
+*.o
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+
+#github standard C++ .gitignore
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
