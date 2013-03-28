@@ -1,0 +1,28 @@
+<package>
+  <name>pose_base_controller</name>
+  <version>0.1.11</version>
+  <description>pose_base_controller</description>
+  <maintainer email="hersh@willowgarage.com">Dave Hershberger</maintainer>
+  <author>Eitan Marder-Eppstein</author>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/pose_base_controller</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>actionlib</build_depend>
+  <build_depend>move_base_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+
+  <run_depend>actionlib</run_depend>
+  <run_depend>move_base_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+
+</package>
+
+

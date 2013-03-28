@@ -1,0 +1,30 @@
+<package>
+  <name>twist_recovery</name>
+  <version>0.1.11</version>
+  <description>twist_recovery</description>
+  <maintainer email="hersh@willowgarage.com">Dave Hershberger</maintainer>
+  <author>Bhaskara Marthi</author>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/twist_recovery</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>nav_core</build_depend>
+  <build_depend>costmap_2d</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>base_local_planner</build_depend>
+
+  <run_depend>nav_core</run_depend>
+  <run_depend>costmap_2d</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>base_local_planner</run_depend>
+
+  <export>
+    <nav_core plugin="${prefix}/twist_plugin.xml" />
+  </export>
+  
+</package>
+
+
