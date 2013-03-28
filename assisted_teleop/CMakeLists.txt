@@ -1,38 +1,46 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
+project(assisted_teleop)
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-set(ROS_BUILD_TYPE Release)
+set(ASSISTED_TELEOP_ROS_DEPS
+  tf
+  costmap_2d
+  roscpp
+  roslib
+  geometry_msgs
+  move_base_msgs
+  actionlib
+  message_filters
+  base_local_planner
+  angles
+  pluginlib
+  sensor_msgs
+  filters
+)
 
-rosbuild_init()
-
+find_package(catkin REQUIRED COMPONENTS ${ASSISTED_TELEOP_ROS_DEPS})
 find_package(Eigen REQUIRED)
-include_directories(${Eigen_INCLUDE_DIRS})
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+include_directories(
+    include
+    ${catkin_INCLUDE_DIRS}
+    ${Eigen_INCLUDE_DIRS}
+)
 
-#uncomment if you have defined messages
-#rosbuild_genmsg()
-#uncomment if you have defined services
-#rosbuild_gensrv()
+catkin_package(
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS ${ASSISTED_TELEOP_ROS_DEPS}
+)
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#rosbuild_add_executable(example examples/example.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+add_executable(assisted_teleop src/assisted_teleop.cpp)
+target_link_libraries(assisted_teleop ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
 
-rosbuild_add_executable(assisted_teleop src/assisted_teleop.cpp)
+add_library(laser_scan_filters src/laser_scan_filters.cpp)
+target_link_libraries(laser_scan_filters ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
 
-rosbuild_add_library(laser_scan_filters src/laser_scan_filters.cpp)
+install(TARGETS assisted_teleop laser_scan_filters
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 
