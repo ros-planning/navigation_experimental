@@ -1,0 +1,37 @@
+<package>
+  <name>sbpl_lattice_planner</name>
+  <version>0.1.11</version>
+  <description>sbpl_lattice_planner</description>
+  <maintainer email="hersh@willowgarage.com">Dave Hershberger</maintainer>
+  <author>Michael Phillips</author>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/sbpl_lattice_planner</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>roscpp</build_depend>
+  <build_depend>costmap_2d</build_depend>
+  <build_depend>nav_core</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>sbpl</build_depend>
+  <build_depend>message_generation</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>costmap_2d</run_depend>
+  <run_depend>nav_core</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>sbpl</run_depend>
+  <run_depend>message_runtime</run_depend>
+
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lsbpl_lattice_planner"/>
+    <nav_core plugin="${prefix}/bgp_plugin.xml" />
+  </export>
+
+</package>
+
+
