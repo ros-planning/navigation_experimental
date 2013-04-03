@@ -1,30 +1,40 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
+project(sbpl_recovery)
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+##############################################################################
+# Find dependencies
+##############################################################################
 
-rosbuild_init()
+set(THIS_PACKAGE_ROS_DEPS roscpp nav_core sbpl_lattice_planner pose_follower
+  costmap_2d pluginlib base_local_planner)
+find_package(catkin REQUIRED COMPONENTS ${THIS_PACKAGE_ROS_DEPS})
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+include_directories(include ${catkin_INCLUDE_DIRS})
+link_directories(${catkin_LIBRARY_DIRS})
 
-#uncomment if you have defined messages
-#rosbuild_genmsg()
-#uncomment if you have defined services
-#rosbuild_gensrv()
+##############################################################################
+# Define package
+##############################################################################
 
-#common commands for building c++ executables and libraries
-rosbuild_add_library(sbpl_recovery src/sbpl_recovery.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#rosbuild_add_executable(example examples/example.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+catkin_package(
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS ${THIS_PACKAGE_ROS_DEPS}
+)
+
+##############################################################################
+# Build
+##############################################################################
+
+add_library(sbpl_recovery src/sbpl_recovery.cpp)
+target_link_libraries(sbpl_recovery ${catkin_LIBRARIES})
+
+##############################################################################
+# Install
+##############################################################################
+
+install(TARGETS sbpl_recovery
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+

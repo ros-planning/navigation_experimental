@@ -1,0 +1,29 @@
+<package>
+  <name>goal_passer</name>
+  <version>0.1.11</version>
+  <description>goal_passer</description>
+  <maintainer email="hersh@willowgarage.com">Dave Hershberger</maintainer>
+  <author>Eitan Marder-Eppstein</author>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/goal_passer</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>costmap_2d</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>nav_core</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>costmap_2d</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>nav_core</run_depend>
+
+  <export>
+    <cpp cflags="-I${prefix}/include -I${prefix}/msg/cpp" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lgoal_passer"/>
+    <nav_core plugin="${prefix}/bgp_plugin.xml" />
+  </export>
+
+</package>
+
+
