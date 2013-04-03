@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package>
+  <name>navigation_experimental</name>
+  <version>0.1.11</version>
+  <description>The navigation_experimental meta-package</description>
+
+  <maintainer email="hersh@willowgarage.com">Dave Hershberger</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <run_depend>assisted_teleop</run_depend>
+  <run_depend>eband_local_planner</run_depend>
+  <run_depend>goal_passer</run_depend>
+  <run_depend>pose_base_controller</run_depend>
+  <run_depend>pose_follower</run_depend>
+  <run_depend>sbpl_lattice_planner</run_depend>
+  <run_depend>sbpl_recovery</run_depend>
+  <run_depend>twist_recovery</run_depend>
+
+</package>

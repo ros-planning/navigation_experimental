@@ -1,0 +1,50 @@
+<package>
+  <name>assisted_teleop</name>
+  <version>0.1.11</version>
+  <description>assisted_teleop</description>
+  <author>Tully Foote</author>
+
+  <maintainer email="hersh@willowgarage.com">Dave Hershberger</maintainer>
+
+  <license>BSD</license>
+  <url>http://ros.org/wiki/assisted_teleop</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>tf</build_depend>
+  <build_depend>costmap_2d</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>roslib</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>move_base_msgs</build_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>message_filters</build_depend>
+  <build_depend>base_local_planner</build_depend>
+  <build_depend>angles</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>filters</build_depend>
+  <build_depend>eigen</build_depend>
+
+  <run_depend>tf</run_depend>
+  <run_depend>costmap_2d</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>roslib</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>move_base_msgs</run_depend>
+  <run_depend>actionlib</run_depend>
+  <run_depend>message_filters</run_depend>
+  <run_depend>base_local_planner</run_depend>
+  <run_depend>angles</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>filters</run_depend>
+  <run_depend>eigen</run_depend>
+
+  <export>
+  <cpp cflags="-I${prefix}/include `rosboost-cfg --cflags`" lflags=""/>
+  <filters plugin="${prefix}/filter_plugins.xml"/>
+  </export>
+</package>
+
+
