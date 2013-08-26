@@ -43,6 +43,7 @@ catkin_package(
 
 add_library(${PROJECT_NAME} src/sbpl_lattice_planner.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${SBPL_LIBRARIES})
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generated_messages_cpp)
 
 ##############################################################################
 # Install
