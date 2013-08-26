@@ -111,8 +111,9 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
     ROS_DEBUG("SBPL: lethal: %uz, inscribed inflated: %uz, multiplier: %uz",lethal_obstacle,inscribed_inflated_obstacle_,sbpl_cost_multiplier_);
     
     costmap_ros_ = costmap_ros;
-    costmap_ros_->clearRobotFootprint();
-    costmap_ros_->getCostmapCopy(cost_map_);
+    // was: costmap_ros_->clearRobotFootprint();
+    costmap_ros_->getCostmap()->setConvexPolygonCost(costmap_ros_->getRobotFootprint(), costmap_2d::FREE_SPACE);
+    cost_map_ = *(costmap_ros_->getCostmap());
 
     std::vector<geometry_msgs::Point> footprint = costmap_ros_->getRobotFootprint();
 
@@ -129,7 +130,7 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
       ROS_ERROR("Failed to set cost_inscribed_thresh parameter");
       exit(1);
     }
-    if(!env_->SetEnvParameter("cost_possibly_circumscribed_thresh", costMapCostToSBPLCost(cost_map_.getCircumscribedCost()))){
+    if(!env_->SetEnvParameter("cost_possibly_circumscribed_thresh", costMapCostToSBPLCost(costmap_2d::INSCRIBED_INFLATED_OBSTACLE))){
       ROS_ERROR("Failed to set cost_possibly_circumscribed_thresh parameter");
       exit(1);
     }
@@ -145,13 +146,13 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
 
     bool ret;
     try{
-      ret = env_->InitializeEnv(costmap_ros_->getSizeInCellsX(), // width
-                                costmap_ros_->getSizeInCellsY(), // height
+      ret = env_->InitializeEnv(cost_map_.getSizeInCellsX(), // width
+                                cost_map_.getSizeInCellsY(), // height
                                 0, // mapdata
                                 0, 0, 0, // start (x, y, theta, t)
                                 0, 0, 0, // goal (x, y, theta)
                                 0, 0, 0, //goal tolerance
-                                perimeterptsV, costmap_ros_->getResolution(), nominalvel_mpersecs,
+                                perimeterptsV, cost_map_.getResolution(), nominalvel_mpersecs,
                                 timetoturn45degsinplace_secs, obst_cost_thresh,
                                 primitive_filename_.c_str());
     }
@@ -163,8 +164,8 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
       ROS_ERROR("SBPL initialization failed!");
       exit(1);
     }
-    for (ssize_t ix(0); ix < costmap_ros_->getSizeInCellsX(); ++ix)
-      for (ssize_t iy(0); iy < costmap_ros_->getSizeInCellsY(); ++iy)
+    for (ssize_t ix(0); ix < cost_map_.getSizeInCellsX(); ++ix)
+      for (ssize_t iy(0); iy < cost_map_.getSizeInCellsY(); ++iy)
         env_->UpdateCost(ix, iy, costMapCostToSBPLCost(cost_map_.getCost(ix,iy)));
 
     if ("ARAPlanner" == planner_type_){
@@ -234,10 +235,11 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
   plan.clear();
 
   ROS_DEBUG("[sbpl_lattice_planner] getting fresh copy of costmap");
-  costmap_ros_->clearRobotFootprint();
+  // was: costmap_ros_->clearRobotFootprint();
+  costmap_ros_->getCostmap()->setConvexPolygonCost(costmap_ros_->getRobotFootprint(), costmap_2d::FREE_SPACE);
   ROS_DEBUG("[sbpl_lattice_planner] robot footprint cleared");
 
-  costmap_ros_->getCostmapCopy(cost_map_);
+  cost_map_ = *(costmap_ros_->getCostmap());
 
   ROS_INFO("[sbpl_lattice_planner] getting start point (%g,%g) goal point (%g,%g)",
            start.pose.position.x, start.pose.position.y,goal.pose.position.x, goal.pose.position.y);
@@ -369,7 +371,7 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
     pose.pose.position.z = start.pose.position.z;
 
     tf::Quaternion temp;
-    temp.setEulerZYX(sbpl_path[i].theta,0,0);
+    temp.setRPY(0,0,sbpl_path[i].theta);
     pose.pose.orientation.x = temp.getX();
     pose.pose.orientation.y = temp.getY();
     pose.pose.orientation.z = temp.getZ();
