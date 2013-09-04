@@ -40,6 +40,8 @@
 #include <nav_msgs/Path.h>
 #include <sbpl_lattice_planner/SBPLLatticePlannerStats.h>
 
+#include <costmap_2d/inflation_layer.h>
+
 using namespace std;
 using namespace ros;
 
@@ -123,11 +125,23 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
       exit(1);
     }
 
+    // check if the costmap has an inflation layer
+    // Warning: footprint updates after initialization are not supported here
+    unsigned char cost_possibly_circumscribed_tresh = 0;
+    for(std::vector<boost::shared_ptr<costmap_2d::Layer> >::const_iterator layer = costmap_ros_->getLayeredCostmap()->getPlugins()->begin();
+        layer != costmap_ros_->getLayeredCostmap()->getPlugins()->end();
+        ++layer) {
+      boost::shared_ptr<costmap_2d::InflationLayer> inflation_layer = boost::shared_dynamic_cast<costmap_2d::InflationLayer>(*layer);
+      if (!inflation_layer) continue;
+
+      cost_possibly_circumscribed_tresh = inflation_layer->computeCost(costmap_ros_->getLayeredCostmap()->getCircumscribedRadius());
+    }
+
     if(!env_->SetEnvParameter("cost_inscribed_thresh",costMapCostToSBPLCost(costmap_2d::INSCRIBED_INFLATED_OBSTACLE))){
       ROS_ERROR("Failed to set cost_inscribed_thresh parameter");
       exit(1);
     }
-    if(!env_->SetEnvParameter("cost_possibly_circumscribed_thresh", costMapCostToSBPLCost(costmap_2d::INSCRIBED_INFLATED_OBSTACLE))){
+    if(!env_->SetEnvParameter("cost_possibly_circumscribed_thresh", costMapCostToSBPLCost(cost_possibly_circumscribed_tresh))){
       ROS_ERROR("Failed to set cost_possibly_circumscribed_thresh parameter");
       exit(1);
     }
