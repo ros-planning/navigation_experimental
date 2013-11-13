@@ -43,7 +43,7 @@ catkin_package(
 ##############################################################################
 
 add_executable(assisted_teleop src/assisted_teleop.cpp)
-target_link_libraries(assisted_teleop ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
+target_link_libraries(assisted_teleop trajectory_planner_ros ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
 
 add_library(laser_scan_filters src/laser_scan_filters.cpp)
 target_link_libraries(laser_scan_filters ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
