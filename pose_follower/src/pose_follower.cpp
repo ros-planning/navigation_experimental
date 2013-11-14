@@ -203,7 +203,7 @@ namespace pose_follower {
     {
       if(current_waypoint_ < global_plan_.size() - 1)
       {
-	current_waypoint_++;
+        current_waypoint_++;
         tf::poseStampedMsgToTF(global_plan_[current_waypoint_], target_pose);
         diff = diff2D(target_pose, robot_pose);
       }
@@ -271,8 +271,8 @@ namespace pose_follower {
 
       //check if its faster to just back up
       if(fabs(neg_yaw_diff) < fabs(yaw_diff)){
-	ROS_DEBUG("Negative is better: %.2f", neg_yaw_diff);
-	yaw_diff = neg_yaw_diff;
+        ROS_DEBUG("Negative is better: %.2f", neg_yaw_diff);
+        yaw_diff = neg_yaw_diff;
       }
     }
 
