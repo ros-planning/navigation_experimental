@@ -54,24 +54,47 @@ namespace pose_follower {
     node_private.param("k_trans", K_trans_, 2.0);
     node_private.param("k_rot", K_rot_, 2.0);
 
-    node_private.param("tolerance_trans", tolerance_trans_, 0.02);
+    //within this distance to the goal, finally rotate to the goal heading (also, we've reached our goal only if we're within this dist)
+    node_private.param("tolerance_trans", tolerance_trans_, 0.02); 
+
+    //we've reached our goal only if we're within this angular distance
     node_private.param("tolerance_rot", tolerance_rot_, 0.04);
+
+    //we've reached our goal only if we're within range for this long and stopped
     node_private.param("tolerance_timeout", tolerance_timeout_, 0.5);
 
+    //set this to true if you're using a holonomic robot
     node_private.param("holonomic", holonomic_, true);
 
+    //number of samples (scaling factors of our current desired twist) to check the validity of 
     node_private.param("samples", samples_, 10);
 
+    //go no faster than this
     node_private.param("max_vel_lin", max_vel_lin_, 0.9);
     node_private.param("max_vel_th", max_vel_th_, 1.4);
 
+    //minimum velocities to keep from getting stuck
     node_private.param("min_vel_lin", min_vel_lin_, 0.1);
     node_private.param("min_vel_th", min_vel_th_, 0.0);
+
+    //if we're rotating in place, go at least this fast to avoid getting stuck
     node_private.param("min_in_place_vel_th", min_in_place_vel_th_, 0.0);
+
+    //when we're near the end and would be trying to go no faster than this translationally, just rotate in place instead
     node_private.param("in_place_trans_vel", in_place_trans_vel_, 0.0);
 
+    //we're "stopped" if we're going slower than these velocities
     node_private.param("trans_stopped_velocity", trans_stopped_velocity_, 1e-4);
     node_private.param("rot_stopped_velocity", rot_stopped_velocity_, 1e-4);
+
+    //if this is true, we don't care whether we go backwards or forwards
+    node_private.param("allow_backwards", allow_backwards_, false);
+
+    //if this is true, turn in place to face the new goal instead of arcing toward it
+    node_private.param("turn_in_place_first", turn_in_place_first_, false);
+
+    //if turn_in_place_first is true, turn in place if our heading is more than this far from facing the goal location
+    node_private.param("max_heading_diff_before_moving", max_heading_diff_before_moving_, 0.17);
 
     ros::NodeHandle node;
     odom_sub_ = node.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&PoseFollower::odomCallback, this, _1));
@@ -241,13 +264,16 @@ namespace pose_follower {
         pose2.getOrigin().x(), pose2.getOrigin().y(), tf::getYaw(pose2.getRotation()));
 
     //we'll also check if we can move more effectively backwards
-    double neg_yaw_diff = headingDiff(pose1.getOrigin().x(), pose1.getOrigin().y(), 
-        pose2.getOrigin().x(), pose2.getOrigin().y(), M_PI + tf::getYaw(pose2.getRotation()));
+    if (allow_backwards_) 
+    {
+      double neg_yaw_diff = headingDiff(pose1.getOrigin().x(), pose1.getOrigin().y(), 
+					pose2.getOrigin().x(), pose2.getOrigin().y(), M_PI + tf::getYaw(pose2.getRotation()));
 
-    //check if its faster to just back up
-    if(fabs(neg_yaw_diff) < fabs(yaw_diff)){
-      ROS_DEBUG("Negative is better: %.2f", neg_yaw_diff);
-      yaw_diff = neg_yaw_diff;
+      //check if its faster to just back up
+      if(fabs(neg_yaw_diff) < fabs(yaw_diff)){
+	ROS_DEBUG("Negative is better: %.2f", neg_yaw_diff);
+	yaw_diff = neg_yaw_diff;
+      }
     }
 
     //compute the desired quaterion
@@ -273,6 +299,15 @@ namespace pose_follower {
     else    
       res.linear.y *= K_trans_;
     res.angular.z *= K_rot_;
+
+    //if turn_in_place_first is true, see if we need to rotate in place to face our goal first
+    if (turn_in_place_first_ && fabs(twist.angular.z) > max_heading_diff_before_moving_)
+    {
+      res.linear.x = 0;
+      res.linear.y = 0;
+      if (fabs(res.angular.z) < min_in_place_vel_th_) res.angular.z = min_in_place_vel_th_ * sign(res.angular.z);
+      return res;
+    }
 
     //make sure to bound things by our velocity limits
     double lin_overshoot = sqrt(res.linear.x * res.linear.x + res.linear.y * res.linear.y) / max_vel_lin_;
