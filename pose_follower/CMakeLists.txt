@@ -13,7 +13,7 @@ catkin_package(
 )
 
 add_library(pose_follower src/pose_follower.cpp)
-target_link_libraries(pose_follower trajectory_planner_ros ${catkin_LIBRARIES})
+target_link_libraries(pose_follower ${catkin_LIBRARIES})
 
 install(TARGETS pose_follower
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
