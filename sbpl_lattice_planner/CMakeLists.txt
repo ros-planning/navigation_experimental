@@ -42,7 +42,7 @@ catkin_package(
 ##############################################################################
 
 add_library(${PROJECT_NAME} src/sbpl_lattice_planner.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${SBPL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${SBPL_LIBRARIES} layers)
 
 ##############################################################################
 # Install
