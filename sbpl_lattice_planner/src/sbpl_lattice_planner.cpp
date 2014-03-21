@@ -383,9 +383,7 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
 
     plan.push_back(pose);
 
-    gui_path.poses[i].pose.position.x = plan[i].pose.position.x;
-    gui_path.poses[i].pose.position.y = plan[i].pose.position.y;
-    gui_path.poses[i].pose.position.z = plan[i].pose.position.z;
+    gui_path.poses[i] = plan[i];
   }
   plan_pub_.publish(gui_path);
   publishStats(solution_cost, sbpl_path.size(), start, goal);
