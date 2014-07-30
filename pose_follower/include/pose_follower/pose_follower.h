@@ -80,6 +80,9 @@ namespace pose_follower {
       double max_vel_lin_, max_vel_th_;
       double min_vel_lin_, min_vel_th_;
       double min_in_place_vel_th_, in_place_trans_vel_;
+      bool allow_backwards_;
+      bool turn_in_place_first_;
+      double max_heading_diff_before_moving_;
       bool holonomic_;
       boost::mutex odom_lock_;
       ros::Subscriber odom_sub_;

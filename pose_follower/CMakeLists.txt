@@ -5,7 +5,7 @@ set(pose_follower_ROS_DEPS nav_core base_local_planner costmap_2d roscpp tf nav_
 find_package(catkin REQUIRED COMPONENTS ${pose_follower_ROS_DEPS})
 
 include_directories(include ${catkin_INCLUDE_DIRS})
-link_directories(${catkin_LINK_DIRS})
+link_directories(${catkin_LIBRARY_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include
