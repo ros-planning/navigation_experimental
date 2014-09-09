@@ -357,6 +357,15 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
     ROS_ERROR("SBPL encountered a fatal exception while reconstructing the path");
     return false;
   }
+  // if the plan has zero points, add a single point to make move_base happy
+  if( sbpl_path.size() == 0 ) {
+    EnvNAVXYTHETALAT3Dpt_t s(
+        start.pose.position.x - costmap_ros_->getCostmap()->getOriginX(),
+        start.pose.position.y - costmap_ros_->getCostmap()->getOriginY(),
+        theta_start);
+    sbpl_path.push_back(s);
+  }
+
   ROS_DEBUG("Plan has %d points.\n", (int)sbpl_path.size());
   ros::Time plan_time = ros::Time::now();
 
