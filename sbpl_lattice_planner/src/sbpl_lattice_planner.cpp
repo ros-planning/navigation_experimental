@@ -209,8 +209,12 @@ unsigned char SBPLLatticePlanner::costMapCostToSBPLCost(unsigned char newcost){
     return inscribed_inflated_obstacle_;
   else if(newcost == 0 || newcost == costmap_2d::NO_INFORMATION)
     return 0;
-  else
-    return (unsigned char) (newcost/sbpl_cost_multiplier_ + 0.5);
+  else {
+    unsigned char sbpl_cost = newcost / sbpl_cost_multiplier_;
+    if (sbpl_cost == 0)
+      sbpl_cost = 1;
+    return sbpl_cost;
+  }
 }
 
 void SBPLLatticePlanner::publishStats(int solution_cost, int solution_size, 
