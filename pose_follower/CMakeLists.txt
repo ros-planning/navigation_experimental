@@ -9,6 +9,7 @@ link_directories(${catkin_LIBRARY_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include
+  LIBRARIES pose_follower
   CATKIN_DEPENDS ${pose_follower_ROS_DEPS}
 )
 
