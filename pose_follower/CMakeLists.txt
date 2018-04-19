@@ -9,6 +9,7 @@ link_directories(${catkin_LIBRARY_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include
+  LIBRARIES pose_follower
   CATKIN_DEPENDS ${pose_follower_ROS_DEPS}
 )
 
@@ -21,4 +22,6 @@ install(TARGETS pose_follower
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-
+install(FILES blp_plugin.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
