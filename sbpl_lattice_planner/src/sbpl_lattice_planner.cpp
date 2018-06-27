@@ -167,8 +167,8 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
                                 timetoturn45degsinplace_secs, obst_cost_thresh,
                                 primitive_filename_.c_str());
     }
-    catch(SBPL_Exception e){
-      ROS_ERROR("SBPL encountered a fatal exception!");
+    catch(SBPL_Exception *e){
+      ROS_ERROR("SBPL encountered a fatal exception: %s", e->what());
       ret = false;
     }
     if(!ret){
@@ -261,7 +261,7 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
       return false;
     }
   }
-  catch(SBPL_Exception e){
+  catch(SBPL_Exception *e){
     ROS_ERROR("SBPL encountered a fatal exception while setting the start state");
     return false;
   }
@@ -273,7 +273,7 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
       return false;
     }
   }
-  catch(SBPL_Exception e){
+  catch(SBPL_Exception *e){
     ROS_ERROR("SBPL encountered a fatal exception while setting the goal state");
     return false;
   }
@@ -323,7 +323,7 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
     if(allCount > force_scratch_limit_)
       planner_->force_planning_from_scratch();
   }
-  catch(SBPL_Exception e){
+  catch(SBPL_Exception *e){
     ROS_ERROR("SBPL failed to update the costmap");
     return false;
   }
@@ -346,7 +346,7 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
       return false;
     }
   }
-  catch(SBPL_Exception e){
+  catch(SBPL_Exception *e){
     ROS_ERROR("SBPL encountered a fatal exception while planning");
     return false;
   }
@@ -357,7 +357,7 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
   try{
     env_->ConvertStateIDPathintoXYThetaPath(&solution_stateIDs, &sbpl_path);
   }
-  catch(SBPL_Exception e){
+  catch(SBPL_Exception *e){
     ROS_ERROR("SBPL encountered a fatal exception while reconstructing the path");
     return false;
   }
