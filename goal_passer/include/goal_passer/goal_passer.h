@@ -44,12 +44,9 @@ namespace goal_passer {
   class GoalPasser : public nav_core::BaseGlobalPlanner {
     public:
       GoalPasser() {}
-      void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
+      void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros) {}
       bool makePlan(const geometry_msgs::PoseStamped& start,
           const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan);
-    private:
-      costmap_2d::Costmap2DROS* costmap_ros_;
-      geometry_msgs::PoseStamped last_goal_;
   };
 };
 #endif

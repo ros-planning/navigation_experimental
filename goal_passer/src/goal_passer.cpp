@@ -41,24 +41,10 @@
 PLUGINLIB_DECLARE_CLASS(goal_passer, GoalPasser, goal_passer::GoalPasser, nav_core::BaseGlobalPlanner)
 
 namespace goal_passer {
-  void GoalPasser::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
-    costmap_ros_ = costmap_ros;
-    costmap_ros_->stop();
-  }
-
   bool GoalPasser::makePlan(const geometry_msgs::PoseStamped& start, 
       const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan){
     plan.clear();
-    if(last_goal_.header.stamp == goal.header.stamp && last_goal_.pose.position.x == goal.pose.position.x && last_goal_.pose.position.y == goal.pose.position.y
-        && last_goal_.pose.position.z == goal.pose.position.z && last_goal_.pose.orientation.x == goal.pose.orientation.x
-        && last_goal_.pose.orientation.y == goal.pose.orientation.y && last_goal_.pose.orientation.z == goal.pose.orientation.z
-        && last_goal_.pose.orientation.w == goal.pose.orientation.w){
-      return false;
-    }
-
     plan.push_back(goal);
-    last_goal_ = goal;
-
     return true;
   }
 };
