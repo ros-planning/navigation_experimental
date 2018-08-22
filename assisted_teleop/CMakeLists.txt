@@ -19,6 +19,7 @@ set(THIS_PACKAGE_ROS_DEPS
   pluginlib
   sensor_msgs
   filters
+  cmake_modules
 )
 
 find_package(catkin REQUIRED COMPONENTS ${THIS_PACKAGE_ROS_DEPS})
