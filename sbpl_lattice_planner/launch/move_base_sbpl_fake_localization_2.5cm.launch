@@ -12,5 +12,5 @@
 
   <node name="fake_localization" pkg="fake_localization" type="fake_localization" respawn="false" />
 
-  <include file="$(find sbpl_lattice_planner)/launch/move_base/nav_view_sbpl.xml"/>
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find sbpl_lattice_planner)/rviz/sbpl.rviz" />
 </launch>
