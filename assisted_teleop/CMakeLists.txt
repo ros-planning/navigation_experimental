@@ -22,9 +22,14 @@ set(THIS_PACKAGE_ROS_DEPS
 )
 
 find_package(catkin REQUIRED COMPONENTS ${THIS_PACKAGE_ROS_DEPS})
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+)
+
 ##############################################################################
 # Define package
 ##############################################################################
@@ -33,7 +38,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES laser_scan_filters
   CATKIN_DEPENDS ${THIS_PACKAGE_ROS_DEPS}
-  DEPENDS Eigen
+  DEPENDS EIGEN3
 )
 
 ##############################################################################
