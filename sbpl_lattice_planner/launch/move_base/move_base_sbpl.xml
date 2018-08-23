@@ -6,7 +6,7 @@
     <param name="controller_frequency" value="10.0" />
     <param name="controller_patience" value="100.0" />
     <param name="base_global_planner" value="SBPLLatticePlanner" />
-    <param name="SBPLLatticePlanner/primitive_filename" value="$(find sbpl)/matlab/mprim/pr2.mprim" />
+    <param name="SBPLLatticePlanner/primitive_filename" value="$(find sbpl_lattice_planner)/matlab/mprim/pr2.mprim" />
     <rosparam file="$(find sbpl_lattice_planner)/launch/move_base/costmap_common_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find sbpl_lattice_planner)/launch/move_base/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find sbpl_lattice_planner)/launch/move_base/local_costmap_params_close.yaml" command="load" />
