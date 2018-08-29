@@ -22,11 +22,13 @@ set(THIS_PACKAGE_ROS_DEPS
 )
 
 find_package(catkin REQUIRED COMPONENTS ${THIS_PACKAGE_ROS_DEPS})
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
-link_directories(${catkin_LIBRARY_DIRS} ${Eigen_LIBRARY_DIRS})
-message("Assisted telop catkin_LIBRARY_DIRS: " ${catkin_LIBRARY_DIRS})
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+)
 
 ##############################################################################
 # Define package
@@ -34,8 +36,9 @@ message("Assisted telop catkin_LIBRARY_DIRS: " ${catkin_LIBRARY_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include
+  LIBRARIES laser_scan_filters
   CATKIN_DEPENDS ${THIS_PACKAGE_ROS_DEPS}
-  DEPENDS Eigen
+  DEPENDS EIGEN3
 )
 
 ##############################################################################
@@ -43,7 +46,7 @@ catkin_package(
 ##############################################################################
 
 add_executable(assisted_teleop src/assisted_teleop.cpp)
-target_link_libraries(assisted_teleop trajectory_planner_ros ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
+target_link_libraries(assisted_teleop ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
 
 add_library(laser_scan_filters src/laser_scan_filters.cpp)
 target_link_libraries(laser_scan_filters ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
@@ -58,4 +61,11 @@ install(TARGETS assisted_teleop laser_scan_filters
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+)
 
+install(FILES filter_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
