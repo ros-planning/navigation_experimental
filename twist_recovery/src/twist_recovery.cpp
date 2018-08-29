@@ -69,8 +69,7 @@ void TwistRecovery::initialize (std::string name, tf::TransformListener* tf,
   tf_ = tf;
   local_costmap_ = local_cmap;
   global_costmap_ = global_cmap;
-  local_costmap_->getCostmapCopy(costmap_);
-  world_model_ = new blp::CostmapModel(costmap_);
+  world_model_ = new blp::CostmapModel(*local_costmap_->getCostmap());
 
   pub_ = nh_.advertise<gm::Twist>("cmd_vel", 10);
   ros::NodeHandle private_nh("~/" + name);
@@ -121,13 +120,7 @@ gm::Pose2D forwardSimulate (const gm::Pose2D& p, const gm::Twist& twist, const d
 /// Return the cost of a pose, modified so that -1 does not equal infinity; instead 1e9 does.
 double TwistRecovery::normalizedPoseCost (const gm::Pose2D& pose) const
 {
-  gm::Point p;
-  p.x = pose.x;
-  p.y = pose.y;
-  vector<gm::Point> oriented_footprint;
-  local_costmap_->getOrientedFootprint(pose.x, pose.y, pose.theta, oriented_footprint);
-  const double c = world_model_->footprintCost(p, oriented_footprint, local_costmap_->getInscribedRadius(),
-                                               local_costmap_->getCircumscribedRadius());
+  const double c = world_model_->footprintCost(pose.x, pose.y, pose.theta, local_costmap_->getRobotFootprint(), 0.0, 0.0);
   return c < 0 ? 1e9 : c;
 }
 
@@ -195,7 +188,6 @@ void TwistRecovery::runBehavior ()
 
   // Figure out how long we can safely run the behavior
   const gm::Pose2D& current = getCurrentLocalPose();
-  local_costmap_->getCostmapCopy(costmap_); // This affects world_model_, which is used in the next step
   
   const double d = nonincreasingCostInterval(current, base_frame_twist_);
   ros::Rate r(controller_frequency_);

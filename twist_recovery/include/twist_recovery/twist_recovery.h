@@ -77,7 +77,6 @@ private:
   ros::NodeHandle nh_;
   costmap_2d::Costmap2DROS* global_costmap_;
   costmap_2d::Costmap2DROS* local_costmap_;
-  costmap_2d::Costmap2D costmap_; // Copy of local_costmap_, used by world model
   std::string name_;
   tf::TransformListener* tf_;
   ros::Publisher pub_;
