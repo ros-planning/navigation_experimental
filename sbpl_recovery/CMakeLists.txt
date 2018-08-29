@@ -10,7 +10,6 @@ set(THIS_PACKAGE_ROS_DEPS roscpp nav_core sbpl_lattice_planner pose_follower
 find_package(catkin REQUIRED COMPONENTS ${THIS_PACKAGE_ROS_DEPS})
 
 include_directories(include ${catkin_INCLUDE_DIRS})
-link_directories(${catkin_LIBRARY_DIRS})
 
 ##############################################################################
 # Define package
@@ -18,6 +17,7 @@ link_directories(${catkin_LIBRARY_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include
+  LIBRARIES sbpl_recovery
   CATKIN_DEPENDS ${THIS_PACKAGE_ROS_DEPS}
 )
 
@@ -38,3 +38,11 @@ install(TARGETS sbpl_recovery
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+)
+
+install(FILES recovery_plugin.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
