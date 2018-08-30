@@ -1,5 +1,5 @@
 <launch>
-  <node name="nav_view" pkg="nav_view" type="nav_view" respawn="false">
+  <node name="nav_view" pkg="rqt_nav_view" type="rqt_nav_view" respawn="false">
     <remap from="goal" to="move_base_simple/goal" />
     <remap from="obstacles" to="move_base_node/local_costmap/obstacles" />
     <remap from="inflated_obstacles" to="move_base_node/local_costmap/inflated_obstacles" />
