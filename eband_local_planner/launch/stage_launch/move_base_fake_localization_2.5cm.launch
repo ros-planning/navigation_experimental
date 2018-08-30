@@ -1,9 +1,0 @@
-<launch>
-  <param name="/use_sim_time" value="true"/>
-  <include file="$(find eband_local_planner)/launch/stage_launch/move_base.xml"/>
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find eband_local_planner)/launch/stage_launch/willow-full-0.025.pgm 0.025" />
-  <node pkg="stage" type="stageros" name="stageros" args="$(find eband_local_planner)/launch/stage_launch/willow-pr2-2.5cm.world" respawn="false" >
-    <param name="base_watchdog_timeout" value="0.2"/>
-  </node>
-  <node name="fake_localization" pkg="fake_localization" type="fake_localization" respawn="false" />
-</launch>
