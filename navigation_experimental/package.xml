@@ -19,4 +19,7 @@
   <run_depend>sbpl_recovery</run_depend>
   <run_depend>twist_recovery</run_depend>
 
+  <export>
+    <metapackage/>
+  </export>
 </package>
