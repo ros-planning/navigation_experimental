@@ -60,3 +60,11 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(FILES bgp_plugin.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+install(DIRECTORY
+  launch
+  matlab
+  rviz
+  worlds
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
