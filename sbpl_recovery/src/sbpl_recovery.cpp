@@ -96,10 +96,10 @@ namespace sbpl_recovery
     //just copy the plan data over
 
     tf::Stamped<tf::Pose> global_pose;
-    !local_costmap_->getRobotPose(global_pose);
+    local_costmap_->getRobotPose(global_pose);
 
     costmap_2d::Costmap2D costmap;
-    local_costmap_->getCostmapCopy(costmap);
+    costmap = *(local_costmap_->getCostmap());
 
     if(use_local_frame_)
     {
@@ -217,12 +217,6 @@ namespace sbpl_recovery
         ROS_ERROR("Unable to find a valid pose to plan to on the global plan.");
         return;
       }
-
-      //if we've got a valid plan, we're going to clear unknown space out to our planning distance
-      //in our costmaps, not the safest thing to do, but we're trying to get out
-      double window_size = 2 * sqrt(sq_planning_distance_);
-      global_costmap_->clearNonLethalWindow(window_size, window_size);
-      local_costmap_->clearNonLethalWindow(window_size, window_size);
 
       //ok... now we've got a plan so we need to try to follow it
       local_planner_.setPlan(sbpl_plan);
