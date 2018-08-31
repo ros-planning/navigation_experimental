@@ -44,7 +44,7 @@ namespace assisted_teleop {
     private_nh.param("num_x_samples", num_x_samples_, 10);
     private_nh.param("theta_range", theta_range_, 0.7);
     private_nh.param("translational_collision_speed", collision_trans_speed_, 0.0);
-    private_nh.param("rotational_collision__speed", collision_rot_speed_, 0.0);
+    private_nh.param("rotational_collision_speed", collision_rot_speed_, 0.0);
     planner_.initialize("planner", &tf_, &costmap_ros_);
 
     ros::NodeHandle n;
