@@ -1,5 +1,4 @@
 <launch>
-  <master auto="start"/>
   <param name="/use_sim_time" value="true"/>
 
   <include file="$(find sbpl_lattice_planner)/launch/move_base/move_base_sbpl.xml"/>
