@@ -1,11 +1,7 @@
 build
-.*so
-.*~
-.*pgm
-msg_gen
-eband_local_planner/src/eband_local_planner
+*~
+*.pgm
 bin
-eband_local_planner/msg/FollowBaseTrajectory*
 
 #github standard C .gitignore
 # Object files

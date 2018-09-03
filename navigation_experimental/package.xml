@@ -17,7 +17,6 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <exec_depend>assisted_teleop</exec_depend>
-  <exec_depend>eband_local_planner</exec_depend>
   <exec_depend>goal_passer</exec_depend>
   <exec_depend>pose_base_controller</exec_depend>
   <exec_depend>pose_follower</exec_depend>
