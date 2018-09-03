@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>pose_base_controller</name>
-  <version>0.1.11</version>
+  <version>0.2.0</version>
   <description>
     A node that provides the move_base action server interface, but instead of
     planning simply drives towards the target pose using a control-based

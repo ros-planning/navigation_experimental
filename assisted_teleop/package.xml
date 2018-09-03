@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>assisted_teleop</name>
-  <version>0.1.11</version>
+  <version>0.2.0</version>
   <description>
     The assisted_teleop node subscribes to a desired trajectory topic
     (geometry_msgs/Twist) and uses TrajectoryPlannerROS to find a valid

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>sbpl_recovery</name>
-  <version>0.1.11</version>
+  <version>0.2.0</version>
   <description>
     A recovery behavior that uses the sbpl lattice planner and the pose
     follower to try to plan in full 3D to get the robot out of really tricky
