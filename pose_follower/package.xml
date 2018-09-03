@@ -26,7 +26,6 @@
   <run_depend>pluginlib</run_depend>
 
   <export>
-    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lpose_follower" />
     <nav_core plugin="${prefix}/blp_plugin.xml" />
   </export>
 

@@ -20,7 +20,6 @@
   <run_depend>nav_core</run_depend>
 
   <export>
-    <cpp cflags="-I${prefix}/include -I${prefix}/msg/cpp" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lgoal_passer"/>
     <nav_core plugin="${prefix}/bgp_plugin.xml" />
   </export>
 
