@@ -35,10 +35,10 @@
 * Author: Eitan Marder-Eppstein
 *********************************************************************/
 #include <goal_passer/goal_passer.h>
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 
 //register this planner as a BaseGlobalPlanner plugin
-PLUGINLIB_DECLARE_CLASS(goal_passer, GoalPasser, goal_passer::GoalPasser, nav_core::BaseGlobalPlanner)
+PLUGINLIB_EXPORT_CLASS(goal_passer::GoalPasser, nav_core::BaseGlobalPlanner)
 
 namespace goal_passer {
   bool GoalPasser::makePlan(const geometry_msgs::PoseStamped& start, 

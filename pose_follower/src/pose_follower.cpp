@@ -35,9 +35,9 @@
 * Author: Eitan Marder-Eppstein
 *********************************************************************/
 #include <pose_follower/pose_follower.h>
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_DECLARE_CLASS(pose_follower, PoseFollower, pose_follower::PoseFollower, nav_core::BaseLocalPlanner)
+PLUGINLIB_EXPORT_CLASS(pose_follower::PoseFollower, nav_core::BaseLocalPlanner)
 
 namespace pose_follower {
   PoseFollower::PoseFollower(): tf_(NULL), costmap_ros_(NULL) {}

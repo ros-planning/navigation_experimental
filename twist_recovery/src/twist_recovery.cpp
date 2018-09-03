@@ -36,12 +36,11 @@
  */
 
 #include <twist_recovery/twist_recovery.h>
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 #include <tf/transform_datatypes.h>
 
 // register as a RecoveryBehavior plugin
-PLUGINLIB_DECLARE_CLASS(twist_recovery, TwistRecovery, twist_recovery::TwistRecovery,      
-                        nav_core::RecoveryBehavior)
+PLUGINLIB_EXPORT_CLASS(twist_recovery::TwistRecovery, nav_core::RecoveryBehavior)
 
 namespace gm=geometry_msgs;
 namespace cmap=costmap_2d;
