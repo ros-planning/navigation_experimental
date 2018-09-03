@@ -1,34 +1,30 @@
-<package>
+<?xml version="1.0"?>
+<package format="2">
   <name>sbpl_recovery</name>
   <version>0.1.11</version>
-  <description>sbpl_recovery</description>
-  <maintainer email="hersh@willowgarage.com">Dave Hershberger</maintainer>
+  <description>
+    A recovery behavior that uses the sbpl lattice planner and the pose
+    follower to try to plan in full 3D to get the robot out of really tricky
+    situations.
+  </description>
+  <maintainer email="martin.guenther@dfki.de">Martin Günther</maintainer>
   <author>Eitan Marder-Eppstein</author>
   <license>BSD</license>
-  <url>http://ros.org/wiki/sbpl_recovery</url>
+  <url type="website">http://wiki.ros.org/sbpl_recovery</url>
+  <url type="repository">https://github.com/ros-planning/navigation_experimental.git</url>
+  <url type="bugtracker">https://github.com/ros-planning/navigation_experimental/issues</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>roscpp</build_depend>
-  <build_depend>nav_core</build_depend>
-  <build_depend>sbpl_lattice_planner</build_depend>
-  <build_depend>pose_follower</build_depend>
-  <build_depend>costmap_2d</build_depend>
-  <build_depend>pluginlib</build_depend>
-  <build_depend>base_local_planner</build_depend>
-
-  <run_depend>roscpp</run_depend>
-  <run_depend>nav_core</run_depend>
-  <run_depend>sbpl_lattice_planner</run_depend>
-  <run_depend>pose_follower</run_depend>
-  <run_depend>costmap_2d</run_depend>
-  <run_depend>pluginlib</run_depend>
-  <run_depend>base_local_planner</run_depend>
+  <depend>base_local_planner</depend>
+  <depend>costmap_2d</depend>
+  <depend>nav_core</depend>
+  <depend>pluginlib</depend>
+  <depend>pose_follower</depend>
+  <depend>roscpp</depend>
+  <depend>sbpl_lattice_planner</depend>
 
   <export>
     <nav_core plugin="${prefix}/recovery_plugin.xml" />
   </export>
-
 </package>
-
-

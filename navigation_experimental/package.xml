@@ -1,23 +1,29 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>navigation_experimental</name>
   <version>0.1.11</version>
-  <description>The navigation_experimental meta-package</description>
-
-  <maintainer email="hersh@willowgarage.com">Dave Hershberger</maintainer>
-
+  <description>
+    A collection of navigation plugins and tools: Various recovery behaviors,
+    local and global planner plugins for move_base, a teleop filter for
+    obstacle avoidance, a simple control-based move_base replacement
+    etc.
+  </description>
+  <maintainer email="martin.guenther@dfki.de">Martin Günther</maintainer>
   <license>BSD</license>
+  <url type="website">http://wiki.ros.org/navigation_experimental</url>
+  <url type="repository">https://github.com/ros-planning/navigation_experimental.git</url>
+  <url type="bugtracker">https://github.com/ros-planning/navigation_experimental/issues</url>
 
   <buildtool_depend>catkin</buildtool_depend>
-  
-  <run_depend>assisted_teleop</run_depend>
-  <run_depend>eband_local_planner</run_depend>
-  <run_depend>goal_passer</run_depend>
-  <run_depend>pose_base_controller</run_depend>
-  <run_depend>pose_follower</run_depend>
-  <run_depend>sbpl_lattice_planner</run_depend>
-  <run_depend>sbpl_recovery</run_depend>
-  <run_depend>twist_recovery</run_depend>
+
+  <exec_depend>assisted_teleop</exec_depend>
+  <exec_depend>eband_local_planner</exec_depend>
+  <exec_depend>goal_passer</exec_depend>
+  <exec_depend>pose_base_controller</exec_depend>
+  <exec_depend>pose_follower</exec_depend>
+  <exec_depend>sbpl_lattice_planner</exec_depend>
+  <exec_depend>sbpl_recovery</exec_depend>
+  <exec_depend>twist_recovery</exec_depend>
 
   <export>
     <metapackage/>

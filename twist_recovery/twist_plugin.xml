@@ -1,7 +1,7 @@
 <library path="lib/libtwist_recovery">
   <class name="twist_recovery/TwistRecovery" type="twist_recovery::TwistRecovery" base_class_type="nav_core::RecoveryBehavior">
     <description>
-      A recovery behavior that performs a particular twist 
+      A recovery behavior that performs a particular used-defined twist.
     </description>
   </class>
 </library>

@@ -1,36 +1,32 @@
-<package>
+<?xml version="1.0"?>
+<package format="2">
   <name>sbpl_lattice_planner</name>
   <version>0.1.11</version>
-  <description>sbpl_lattice_planner</description>
-  <maintainer email="hersh@willowgarage.com">Dave Hershberger</maintainer>
+  <description>
+    The sbpl_lattice_planner is a global planner plugin for move_base and wraps
+    the SBPL search-based planning library.
+  </description>
+  <maintainer email="martin.guenther@dfki.de">Martin Günther</maintainer>
   <author>Michael Phillips</author>
   <license>BSD</license>
-  <url>http://ros.org/wiki/sbpl_lattice_planner</url>
+  <url type="website">http://wiki.ros.org/sbpl_lattice_planner</url>
+  <url type="repository">https://github.com/ros-planning/navigation_experimental.git</url>
+  <url type="bugtracker">https://github.com/ros-planning/navigation_experimental/issues</url>
 
   <buildtool_depend>catkin</buildtool_depend>
   
-  <build_depend>roscpp</build_depend>
-  <build_depend>costmap_2d</build_depend>
-  <build_depend>nav_core</build_depend>
-  <build_depend>pluginlib</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>nav_msgs</build_depend>
-  <build_depend>sbpl</build_depend>
-  <build_depend>message_generation</build_depend>
+  <depend>costmap_2d</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_core</depend>
+  <depend>nav_msgs</depend>
+  <depend>pluginlib</depend>
+  <depend>roscpp</depend>
+  <depend>sbpl</depend>
 
-  <run_depend>roscpp</run_depend>
-  <run_depend>costmap_2d</run_depend>
-  <run_depend>nav_core</run_depend>
-  <run_depend>pluginlib</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>nav_msgs</run_depend>
-  <run_depend>sbpl</run_depend>
-  <run_depend>message_runtime</run_depend>
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
 
   <export>
     <nav_core plugin="${prefix}/bgp_plugin.xml" />
   </export>
-
 </package>
-
-
