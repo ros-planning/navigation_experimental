@@ -23,6 +23,7 @@
   <depend>pose_follower</depend>
   <depend>roscpp</depend>
   <depend>sbpl_lattice_planner</depend>
+  <depend>tf2_ros</depend>
 
   <export>
     <nav_core plugin="${prefix}/recovery_plugin.xml" />

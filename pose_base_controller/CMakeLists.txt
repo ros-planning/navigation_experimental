@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(pose_base_controller)
 
-find_package(catkin REQUIRED COMPONENTS actionlib move_base_msgs nav_msgs roscpp tf geometry_msgs)
+find_package(catkin REQUIRED COMPONENTS actionlib move_base_msgs nav_msgs roscpp tf2_geometry_msgs tf2_ros geometry_msgs)
 find_package(Boost COMPONENTS system filesystem thread REQUIRED)
 
 include_directories(
@@ -12,7 +12,7 @@ include_directories(
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS actionlib move_base_msgs nav_msgs roscpp tf geometry_msgs
+  CATKIN_DEPENDS actionlib move_base_msgs nav_msgs roscpp tf2_geometry_msgs tf2_ros geometry_msgs
 )
 
 add_executable(pose_base_controller src/pose_base_controller.cpp)

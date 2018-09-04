@@ -37,10 +37,11 @@
 #include <pose_base_controller/pose_base_controller.h>
 
 namespace pose_base_controller {
-  PoseBaseController::PoseBaseController() : action_server_(ros::NodeHandle(), 
-                                        "pose_base_controller", 
+PoseBaseController::PoseBaseController() : tfl_(tf_),
+                                           action_server_(ros::NodeHandle(),
+                                                          "pose_base_controller",
                                         boost::bind(&PoseBaseController::execute, this, _1),
-                                        false){
+                                                          false) {
     ros::NodeHandle node_private("~");
     node_private.param("k_trans", K_trans_, 1.0);
     node_private.param("k_rot", K_rot_, 1.0);
@@ -101,39 +102,38 @@ namespace pose_base_controller {
     return -1.0 * vector_angle;
   }
 
-  tf::Stamped<tf::Pose> PoseBaseController::getRobotPose(){
-    tf::Stamped<tf::Pose> global_pose, robot_pose;
-    global_pose.setIdentity();
-    robot_pose.setIdentity();
-    robot_pose.frame_id_ = base_frame_;
-    robot_pose.stamp_ = ros::Time();
+  tf2::Stamped<tf2::Transform> PoseBaseController::getRobotPose(){
+    geometry_msgs::PoseStamped global_pose, robot_pose;
+    robot_pose.pose.orientation.w = 1.0;
+    robot_pose.header.frame_id = base_frame_;
 
-    tf_.transformPose(fixed_frame_, robot_pose, global_pose);
-    //ROS_INFO("Delay: %f", (global_pose.stamp_ - ros::Time::now()).toSec());
-    return global_pose;
+    tf_.transform(robot_pose, global_pose, fixed_frame_);
+    //ROS_INFO("Delay: %f", (global_pose.header.stamp - ros::Time::now()).toSec());
+
+    tf2::Stamped<tf2::Transform> global_pose_tf;
+    tf2::fromMsg(global_pose, global_pose_tf);
+    return global_pose_tf;
   }
 
   move_base_msgs::MoveBaseGoal PoseBaseController::goalToFixedFrame(const move_base_msgs::MoveBaseGoal& goal){
-    tf::Stamped<tf::Pose> pose, fixed_pose;
-    tf::poseStampedMsgToTF(goal.target_pose, pose);
+    move_base_msgs::MoveBaseGoal fixed_goal;
+    geometry_msgs::PoseStamped pose;
+    pose = goal.target_pose;
 
     //just get the latest available transform... for accuracy they should send
     //goals in the frame of the planner
-    pose.stamp_ = ros::Time();
-
+    pose.header.stamp = ros::Time();
+    
     try{
-      tf_.transformPose(fixed_frame_, pose, fixed_pose);
+      tf_.transform(pose, fixed_goal.target_pose, fixed_frame_);
     }
-    catch(tf::TransformException& ex){
+    catch(tf2::TransformException& ex){
       ROS_WARN("Failed to transform the goal pose from %s into the %s frame: %s",
-          pose.frame_id_.c_str(), fixed_frame_.c_str(), ex.what());
+          pose.header.frame_id.c_str(), fixed_frame_.c_str(), ex.what());
       return goal;
     }
 
-    move_base_msgs::MoveBaseGoal fixed_goal;
-    tf::poseStampedTFToMsg(fixed_pose, fixed_goal.target_pose);
     return fixed_goal;
-
   }
 
   void PoseBaseController::execute(const move_base_msgs::MoveBaseGoalConstPtr& user_goal){
@@ -187,12 +187,11 @@ namespace pose_base_controller {
         return false;
       }
       ROS_DEBUG("At least looping");
-      tf::Stamped<tf::Pose> target_pose;
-      tf::poseStampedMsgToTF(current_goal.target_pose, target_pose);
-
+      tf2::Stamped<tf2::Transform> target_pose;
+      tf2::convert(current_goal.target_pose, target_pose);
 
       //get the current pose of the robot in the fixed frame
-      tf::Stamped<tf::Pose> robot_pose;
+      tf2::Stamped<tf2::Transform> robot_pose;
       try {
         robot_pose = getRobotPose();
         //make sure that the transform to the dance frame isn't too out of date
@@ -204,14 +203,14 @@ namespace pose_base_controller {
           return false;
         }
       }
-      catch(tf::TransformException &ex){
+      catch(tf2::TransformException &ex){
         ROS_ERROR("Can't transform: %s\n", ex.what());
         geometry_msgs::Twist empty_twist;
         vel_pub_.publish(empty_twist);
         return false;
       }
-      ROS_DEBUG("PoseBaseController: current robot pose %f %f ==> %f", robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()));
-      ROS_DEBUG("PoseBaseController: target robot pose %f %f ==> %f", target_pose.getOrigin().x(), target_pose.getOrigin().y(), tf::getYaw(target_pose.getRotation()));
+      ROS_DEBUG("PoseBaseController: current robot pose %f %f ==> %f", robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf2::getYaw(robot_pose.getRotation()));
+      ROS_DEBUG("PoseBaseController: target robot pose %f %f ==> %f", target_pose.getOrigin().x(), target_pose.getOrigin().y(), tf2::getYaw(target_pose.getRotation()));
 
       //get the difference between the two poses
       geometry_msgs::Twist diff = diff2D(target_pose, robot_pose);
@@ -236,13 +235,13 @@ namespace pose_base_controller {
     return false;
   }
 
-  geometry_msgs::Twist PoseBaseController::diff2D(const tf::Pose& pose1, const tf::Pose& pose2)
+  geometry_msgs::Twist PoseBaseController::diff2D(const tf2::Transform& pose1, const tf2::Transform& pose2)
   {
     geometry_msgs::Twist res;
-    tf::Pose diff = pose2.inverse() * pose1;
+    tf2::Transform diff = pose2.inverse() * pose1;
     res.linear.x = diff.getOrigin().x();
     res.linear.y = diff.getOrigin().y();
-    res.angular.z = tf::getYaw(diff.getRotation());
+    res.angular.z = tf2::getYaw(diff.getRotation());
 
     if(holonomic_ || (fabs(res.linear.x) <= tolerance_trans_ && fabs(res.linear.y) <= tolerance_trans_))
       return res;
@@ -252,11 +251,11 @@ namespace pose_base_controller {
     
     //we want to compute a goal based on the heading difference between our pose and the target
     double yaw_diff = headingDiff(pose1.getOrigin().x(), pose1.getOrigin().y(), 
-        pose2.getOrigin().x(), pose2.getOrigin().y(), tf::getYaw(pose2.getRotation()));
+        pose2.getOrigin().x(), pose2.getOrigin().y(), tf2::getYaw(pose2.getRotation()));
 
     //we'll also check if we can move more effectively backwards
     double neg_yaw_diff = headingDiff(pose1.getOrigin().x(), pose1.getOrigin().y(), 
-        pose2.getOrigin().x(), pose2.getOrigin().y(), M_PI + tf::getYaw(pose2.getRotation()));
+        pose2.getOrigin().x(), pose2.getOrigin().y(), M_PI + tf2::getYaw(pose2.getRotation()));
 
     //check if its faster to just back up
     if(fabs(neg_yaw_diff) < fabs(yaw_diff)){
@@ -265,15 +264,16 @@ namespace pose_base_controller {
     }
 
     //compute the desired quaterion
-    tf::Quaternion rot_diff = tf::createQuaternionFromYaw(yaw_diff);
-    tf::Quaternion rot = pose2.getRotation() * rot_diff;
-    tf::Pose new_pose = pose1;
+    tf2::Quaternion rot_diff;
+    rot_diff.setRPY(0.0, 0.0, yaw_diff);
+    tf2::Quaternion rot = pose2.getRotation() * rot_diff;
+    tf2::Transform new_pose = pose1;
     new_pose.setRotation(rot);
 
     diff = pose2.inverse() * new_pose;
     res.linear.x = diff.getOrigin().x();
     res.linear.y = diff.getOrigin().y();
-    res.angular.z = tf::getYaw(diff.getRotation());
+    res.angular.z = tf2::getYaw(diff.getRotation());
     return res;
   }
 

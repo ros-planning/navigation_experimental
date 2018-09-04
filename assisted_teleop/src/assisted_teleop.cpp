@@ -37,7 +37,7 @@
 #include <assisted_teleop/assisted_teleop.h>
 
 namespace assisted_teleop {
-  AssistedTeleop::AssistedTeleop() : costmap_ros_("costmap", tf_), planning_thread_(NULL){
+  AssistedTeleop::AssistedTeleop() : tfl_(tf_), costmap_ros_("costmap", tf_), planning_thread_(NULL){
     ros::NodeHandle private_nh("~");
     private_nh.param("controller_frequency", controller_frequency_, 10.0);
     private_nh.param("num_th_samples", num_th_samples_, 20);

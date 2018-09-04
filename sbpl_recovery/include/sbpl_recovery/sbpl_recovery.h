@@ -45,6 +45,7 @@
 #include <nav_msgs/Path.h>
 #include <boost/thread.hpp>
 #include <base_local_planner/goal_functions.h>
+#include <tf2_ros/buffer.h>
 
 namespace sbpl_recovery
 {
@@ -54,7 +55,7 @@ namespace sbpl_recovery
       SBPLRecovery();
 
       // Initialize the parameters of the behavior
-      void initialize (std::string n, tf::TransformListener* tf,
+      void initialize (std::string n, tf2_ros::Buffer* tf,
           costmap_2d::Costmap2DROS* global_costmap,
           costmap_2d::Costmap2DROS* local_costmap);
 
@@ -69,7 +70,7 @@ namespace sbpl_recovery
 
       costmap_2d::Costmap2DROS* global_costmap_;
       costmap_2d::Costmap2DROS* local_costmap_;
-      tf::TransformListener* tf_;
+      tf2_ros::Buffer* tf_;
       sbpl_lattice_planner::SBPLLatticePlanner global_planner_;
       pose_follower::PoseFollower local_planner_;
       bool initialized_;

@@ -43,6 +43,9 @@
 #include <base_local_planner/costmap_model.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <geometry_msgs/Pose2D.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Twist.h>
+#include <tf2_ros/buffer.h>
 
 namespace twist_recovery
 {
@@ -59,7 +62,7 @@ public:
   ~TwistRecovery();
 
   /// Initialize the parameters of the behavior
-  void initialize (std::string n, tf::TransformListener* tf,
+  void initialize (std::string n, tf2_ros::Buffer* tf,
                    costmap_2d::Costmap2DROS* global_costmap,
                    costmap_2d::Costmap2DROS* local_costmap);
 
@@ -78,7 +81,7 @@ private:
   costmap_2d::Costmap2DROS* global_costmap_;
   costmap_2d::Costmap2DROS* local_costmap_;
   std::string name_;
-  tf::TransformListener* tf_;
+  tf2_ros::Buffer* tf_;
   ros::Publisher pub_;
   bool initialized_;
 

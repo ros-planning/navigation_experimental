@@ -37,8 +37,12 @@
 #ifndef POSE_BASE_CONTROLLER_POSE_BASE_CONTROLLER_H_
 #define POSE_BASE_CONTROLLER_POSE_BASE_CONTROLLER_H_
 #include <ros/ros.h>
-#include <tf/tf.h>
-#include <tf/transform_listener.h>
+#include <tf2/convert.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 #include <actionlib/server/simple_action_server.h>
 #include <move_base_msgs/MoveBaseAction.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -60,13 +64,13 @@ namespace pose_base_controller {
 
       void execute(const move_base_msgs::MoveBaseGoalConstPtr& user_goal);
       bool controlLoop(const move_base_msgs::MoveBaseGoal& current_goal);
-      tf::Stamped<tf::Pose> getRobotPose();
+      tf2::Stamped<tf2::Transform> getRobotPose();
 
       inline double sign(double n){
         return n < 0.0 ? -1.0 : 1.0;
       }
 
-      geometry_msgs::Twist diff2D(const tf::Pose& pose1, const tf::Pose& pose2);
+      geometry_msgs::Twist diff2D(const tf2::Transform& pose1, const tf2::Transform& pose2);
       geometry_msgs::Twist limitTwist(const geometry_msgs::Twist& twist);
       double headingDiff(double pt_x, double pt_y, double x, double y, double heading);
       move_base_msgs::MoveBaseGoal goalToFixedFrame(const move_base_msgs::MoveBaseGoal& goal);
@@ -76,7 +80,8 @@ namespace pose_base_controller {
       bool stopped();
 
       MoveBaseActionServer action_server_;
-      tf::TransformListener tf_;
+      tf2_ros::Buffer tf_;
+      tf2_ros::TransformListener tfl_;
       ros::Publisher vel_pub_;
       double K_trans_, K_rot_, tolerance_trans_, tolerance_rot_;
       double tolerance_timeout_, freq_;

@@ -37,6 +37,7 @@
 
 #include <sbpl_recovery/sbpl_recovery.h>
 #include <pluginlib/class_list_macros.hpp>
+#include <geometry_msgs/PoseStamped.h>
 
 PLUGINLIB_EXPORT_CLASS(sbpl_recovery::SBPLRecovery, nav_core::RecoveryBehavior)
 
@@ -50,7 +51,7 @@ namespace sbpl_recovery
   {
   }
 
-  void SBPLRecovery::initialize (std::string n, tf::TransformListener* tf,
+  void SBPLRecovery::initialize (std::string n, tf2_ros::Buffer* tf,
       costmap_2d::Costmap2DROS* global_costmap,
       costmap_2d::Costmap2DROS* local_costmap)
   {
@@ -94,7 +95,7 @@ namespace sbpl_recovery
   {
     //just copy the plan data over
 
-    tf::Stamped<tf::Pose> global_pose;
+    geometry_msgs::PoseStamped global_pose;
     local_costmap_->getRobotPose(global_pose);
 
     costmap_2d::Costmap2D costmap;
@@ -132,10 +133,10 @@ namespace sbpl_recovery
     boost::mutex::scoped_lock l(plan_mutex_);
     std::vector<geometry_msgs::PoseStamped> sbpl_plan;
 
-    tf::Stamped<tf::Pose> global_pose;
+    geometry_msgs::PoseStamped start;
     if(use_local_frame_)
     {
-      if(!local_costmap_->getRobotPose(global_pose))
+      if(!local_costmap_->getRobotPose(start))
       {
         ROS_ERROR("SBPL recovery behavior could not get the current pose of the robot. Doing nothing.");
         return sbpl_plan;
@@ -143,15 +144,12 @@ namespace sbpl_recovery
     }
     else
     {
-      if(!global_costmap_->getRobotPose(global_pose))
+      if(!global_costmap_->getRobotPose(start))
       {
         ROS_ERROR("SBPL recovery behavior could not get the current pose of the robot. Doing nothing.");
         return sbpl_plan;
       }
     }
-
-    geometry_msgs::PoseStamped start;
-    tf::poseStampedTFToMsg(global_pose, start);
 
     //first, we want to walk far enough along the path that we get to a point
     //that is within the recovery distance from the robot. Otherwise, we might
