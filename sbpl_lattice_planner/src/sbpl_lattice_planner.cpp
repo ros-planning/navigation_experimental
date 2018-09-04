@@ -41,6 +41,7 @@
 #include <sbpl_lattice_planner/SBPLLatticePlannerStats.h>
 
 #include <costmap_2d/inflation_layer.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 using namespace std;
 using namespace ros;
@@ -387,7 +388,7 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
     pose.pose.position.y = sbpl_path[i].y + costmap_ros_->getCostmap()->getOriginY();
     pose.pose.position.z = start.pose.position.z;
 
-    tf::Quaternion temp;
+    tf2::Quaternion temp;
     temp.setRPY(0,0,sbpl_path[i].theta);
     pose.pose.orientation.x = temp.getX();
     pose.pose.orientation.y = temp.getY();

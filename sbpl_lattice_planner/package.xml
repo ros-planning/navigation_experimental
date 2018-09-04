@@ -22,6 +22,7 @@
   <depend>pluginlib</depend>
   <depend>roscpp</depend>
   <depend>sbpl</depend>
+  <depend>tf2</depend>
 
   <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>

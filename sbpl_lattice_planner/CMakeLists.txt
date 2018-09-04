@@ -5,7 +5,7 @@ project(sbpl_lattice_planner)
 # Find dependencies
 ##############################################################################
 
-set(THIS_PACKAGE_ROS_DEPS roscpp costmap_2d nav_core pluginlib 
+set(THIS_PACKAGE_ROS_DEPS roscpp costmap_2d nav_core pluginlib tf2
   geometry_msgs nav_msgs)
 find_package(catkin REQUIRED COMPONENTS
   ${THIS_PACKAGE_ROS_DEPS} message_generation)
