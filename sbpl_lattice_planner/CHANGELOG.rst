@@ -2,6 +2,12 @@
 Changelog for package sbpl_lattice_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* sbpl_lattice_planner: Update to tf2, add dependency
+* Use non deprecated pluginlib macro + headers
+* Contributors: Martin Günther
+
 0.2.0 (2018-09-03)
 ------------------
 * Initial release into indigo, kinetic, lunar and melodic
