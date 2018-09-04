@@ -2,8 +2,8 @@
 Changelog for package pose_base_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.0 (2018-09-04)
+------------------
 * Convert to TF2 + new navigation API (for melodic)
 * Contributors: Martin Günther
 
