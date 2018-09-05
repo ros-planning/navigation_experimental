@@ -27,6 +27,7 @@ catkin_package(
 
 add_library(sbpl_recovery src/sbpl_recovery.cpp)
 target_link_libraries(sbpl_recovery ${catkin_LIBRARIES})
+target_compile_options(sbpl_recovery PUBLIC "-Wno-terminate")  # suppress warning from included SBPL header
 
 ##############################################################################
 # Install
