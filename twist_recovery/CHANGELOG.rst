@@ -2,6 +2,12 @@
 Changelog for package twist_recovery
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* twist_recovery: Add missing dependency
+  Actually, this is a workaround for the following bug: https://github.com/ros/geometry2/issues/275
+* Contributors: Martin Günther
+
 0.3.0 (2018-09-04)
 ------------------
 * Convert to TF2 + new navigation API (for melodic)

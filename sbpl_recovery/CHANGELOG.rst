@@ -2,6 +2,11 @@
 Changelog for package sbpl_recovery
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* sbpl_recovery: Ignore SBPL compile warning
+* Contributors: Martin Günther
+
 0.3.0 (2018-09-04)
 ------------------
 * Convert to TF2 + new navigation API (for melodic)

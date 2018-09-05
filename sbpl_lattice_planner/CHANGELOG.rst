@@ -2,6 +2,9 @@
 Changelog for package sbpl_lattice_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.3.0 (2018-09-04)
 ------------------
 * sbpl_lattice_planner: Update to tf2, add dependency
