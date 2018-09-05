@@ -2,8 +2,8 @@
 Changelog for package assisted_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.1 (2018-09-05)
+------------------
 * assisted_teleop: Don't link against Eigen_LIBRARIES
   That variable is not set. Eigen is a header-only library.
 * Contributors: Martin Günther

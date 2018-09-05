@@ -2,8 +2,8 @@
 Changelog for package twist_recovery
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.1 (2018-09-05)
+------------------
 * twist_recovery: Add missing dependency
   Actually, this is a workaround for the following bug: https://github.com/ros/geometry2/issues/275
 * Contributors: Martin Günther

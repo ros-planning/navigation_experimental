@@ -2,8 +2,8 @@
 Changelog for package sbpl_recovery
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.1 (2018-09-05)
+------------------
 * sbpl_recovery: Ignore SBPL compile warning
 * Contributors: Martin Günther
 
