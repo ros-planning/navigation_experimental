@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(twist_recovery)
 
 # Find ROS dependencies
-set(THIS_PACKAGE_ROS_DEPS nav_core costmap_2d geometry_msgs pluginlib base_local_planner tf2_ros)
+set(THIS_PACKAGE_ROS_DEPS nav_core costmap_2d geometry_msgs pluginlib base_local_planner tf2_geometry_msgs tf2_ros)
 find_package(catkin REQUIRED COMPONENTS ${THIS_PACKAGE_ROS_DEPS})
 
 include_directories(include ${catkin_INCLUDE_DIRS})
