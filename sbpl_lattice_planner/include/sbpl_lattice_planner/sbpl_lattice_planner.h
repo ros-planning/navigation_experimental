@@ -6,8 +6,9 @@
 
 using namespace std;
 
-/** ROS **/
+// ROS
 #include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
 
 // Costmap used for the map representation
 #include <costmap_2d/costmap_2d_ros.h>
@@ -15,7 +16,7 @@ using namespace std;
 // sbpl headers
 #include <sbpl/headers.h>
 
-//global representation
+// global representation
 #include <nav_core/base_global_planner.h>
 
 namespace sbpl_lattice_planner{

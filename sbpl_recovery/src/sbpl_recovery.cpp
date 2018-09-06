@@ -37,7 +37,6 @@
 
 #include <sbpl_recovery/sbpl_recovery.h>
 #include <pluginlib/class_list_macros.hpp>
-#include <geometry_msgs/PoseStamped.h>
 
 PLUGINLIB_EXPORT_CLASS(sbpl_recovery::SBPLRecovery, nav_core::RecoveryBehavior)
 
