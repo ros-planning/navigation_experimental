@@ -351,7 +351,7 @@ namespace pose_follower {
     transformed_plan.clear();
 
     try{
-      if (!global_plan.size() > 0)
+      if (global_plan.empty())
       {
         ROS_ERROR("Recieved plan with zero length");
         return false;
@@ -386,7 +386,7 @@ namespace pose_follower {
     }
     catch(tf::ExtrapolationException& ex) {
       ROS_ERROR("Extrapolation Error: %s\n", ex.what());
-      if (global_plan.size() > 0)
+      if (!global_plan.empty())
         ROS_ERROR("Global Frame: %s Plan Frame size %d: %s\n", global_frame.c_str(), (unsigned int)global_plan.size(), global_plan[0].header.frame_id.c_str());
 
       return false;
