@@ -42,6 +42,7 @@
 #include <costmap_2d/costmap_2d_ros.h>
 #include <pose_follower/pose_follower.h>
 #include <sbpl_lattice_planner/sbpl_lattice_planner.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <boost/thread.hpp>
 #include <base_local_planner/goal_functions.h>
