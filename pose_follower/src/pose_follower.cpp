@@ -97,10 +97,11 @@ namespace pose_follower {
     //if turn_in_place_first is true, turn in place if our heading is more than this far from facing the goal location
     node_private.param("max_heading_diff_before_moving", max_heading_diff_before_moving_, 0.17);
 
+    global_plan_pub_ = node_private.advertise<nav_msgs::Path>("global_plan", 1);
+
     ros::NodeHandle node;
     odom_sub_ = node.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&PoseFollower::odomCallback, this, _1));
     vel_pub_ = node.advertise<geometry_msgs::Twist>("cmd_vel", 10);
-    global_plan_pub_ = node.advertise<nav_msgs::Path>("global_plan", 1);
 
     ROS_DEBUG("Initialized");
   }
