@@ -100,7 +100,7 @@ namespace pose_follower {
     ros::NodeHandle node;
     odom_sub_ = node.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&PoseFollower::odomCallback, this, _1));
     vel_pub_ = node.advertise<geometry_msgs::Twist>("cmd_vel", 10);
-		global_plan_pub_ = node.advertise<nav_msgs::Path>("global_plan", 1);
+    global_plan_pub_ = node.advertise<nav_msgs::Path>("global_plan", 1);
 
     ROS_DEBUG("Initialized");
   }
@@ -143,25 +143,25 @@ namespace pose_follower {
       && fabs(base_odom.twist.twist.linear.x) <= trans_stopped_velocity_
       && fabs(base_odom.twist.twist.linear.y) <= trans_stopped_velocity_;
   }
-	
+
   void PoseFollower::publishPlan(const std::vector<geometry_msgs::PoseStamped> &path,
                                const ros::Publisher &pub) {
-		// given an empty path we won't do anything
-		if (path.empty())
-			return;
+  // given an empty path we won't do anything
+  if (path.empty())
+    return;
 
-		// create a path message
-		nav_msgs::Path gui_path;
-		gui_path.poses.resize(path.size());
-		gui_path.header.frame_id = path[0].header.frame_id;
-		gui_path.header.stamp = path[0].header.stamp;
+  // create a path message
+  nav_msgs::Path gui_path;
+  gui_path.poses.resize(path.size());
+  gui_path.header.frame_id = path[0].header.frame_id;
+  gui_path.header.stamp = path[0].header.stamp;
 
-		// Extract the plan in world co-ordinates, we assume the path is all in the same frame
-		for (unsigned int i = 0; i < path.size(); i++) {
-			gui_path.poses[i] = path[i];
-		}
-		pub.publish(gui_path);
-	}
+  // Extract the plan in world co-ordinates, we assume the path is all in the same frame
+  for (unsigned int i = 0; i < path.size(); i++) {
+    gui_path.poses[i] = path[i];
+  }
+  pub.publish(gui_path);
+  }
 
   bool PoseFollower::computeVelocityCommands(geometry_msgs::Twist& cmd_vel){
     //get the current pose of the robot in the fixed frame
@@ -250,16 +250,16 @@ namespace pose_follower {
   }
 
   bool PoseFollower::setPlan(const std::vector<geometry_msgs::PoseStamped>& global_plan){
-		global_plan_.clear();
+    global_plan_.clear();
     current_waypoint_ = 0;
     goal_reached_time_ = ros::Time::now();
     if(!transformGlobalPlan(*tf_, global_plan, *costmap_ros_, costmap_ros_->getGlobalFrameID(), global_plan_)){
       ROS_ERROR("Could not transform the global plan to the frame of the controller");
       return false;
     }
-		
-		ROS_DEBUG("global plan size: %lu", global_plan_.size());
-  	publishPlan(global_plan_, global_plan_pub_);
+
+    ROS_DEBUG("global plan size: %lu", global_plan_.size());
+    publishPlan(global_plan_, global_plan_pub_);
     return true;
   }
 
