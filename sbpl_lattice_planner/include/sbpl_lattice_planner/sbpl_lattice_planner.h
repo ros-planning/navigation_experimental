@@ -91,9 +91,6 @@ private:
 
   ros::Publisher plan_pub_;
   ros::Publisher stats_publisher_;
-  
-  std::vector<geometry_msgs::Point> footprint_;
-
 };
 };
 
