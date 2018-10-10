@@ -90,8 +90,7 @@ SBPLLatticePlanner::SBPLLatticePlanner(std::string name, costmap_2d::Costmap2DRO
 void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
   if(!initialized_){
     ros::NodeHandle private_nh("~/"+name);
-    ros::NodeHandle nh(name);
-    
+
     ROS_INFO("Name is %s", name.c_str());
 
     private_nh.param("planner_type", planner_type_, string("ARAPlanner"));
@@ -112,7 +111,8 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
     inscribed_inflated_obstacle_ = lethal_obstacle_-1;
     sbpl_cost_multiplier_ = (unsigned char) (costmap_2d::INSCRIBED_INFLATED_OBSTACLE/inscribed_inflated_obstacle_ + 1);
     ROS_DEBUG("SBPL: lethal: %uz, inscribed inflated: %uz, multiplier: %uz",lethal_obstacle,inscribed_inflated_obstacle_,sbpl_cost_multiplier_);
-    
+
+    name_ = name;
     costmap_ros_ = costmap_ros;
 
     std::vector<geometry_msgs::Point> footprint = costmap_ros_->getRobotFootprint();
@@ -167,6 +167,8 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
                                 perimeterptsV, costmap_ros_->getCostmap()->getResolution(), nominalvel_mpersecs,
                                 timetoturn45degsinplace_secs, obst_cost_thresh,
                                 primitive_filename_.c_str());
+      current_env_width_ = costmap_ros_->getCostmap()->getSizeInCellsX();
+      current_env_height_ = costmap_ros_->getCostmap()->getSizeInCellsY();
     }
     catch(SBPL_Exception *e){
       ROS_ERROR("SBPL encountered a fatal exception: %s", e->what());
@@ -246,6 +248,19 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
   if(!initialized_){
     ROS_ERROR("Global planner is not initialized");
     return false;
+  }
+
+  if (current_env_width_ != costmap_ros_->getCostmap()->getSizeInCellsX() ||
+      current_env_height_ != costmap_ros_->getCostmap()->getSizeInCellsY()) {
+    ROS_INFO("Costmap dimensions have changed from (%d x %d) to (%d x %d), reinitializing sbpl_lattice_planner.",
+             current_env_width_, current_env_height_,
+             costmap_ros_->getCostmap()->getSizeInCellsX(), costmap_ros_->getCostmap()->getSizeInCellsY());
+    initialized_ = false;
+    delete planner_;
+    planner_ = NULL;
+    delete env_;
+    env_ = NULL;
+    initialize(name_, costmap_ros_);
   }
 
   plan.clear();
