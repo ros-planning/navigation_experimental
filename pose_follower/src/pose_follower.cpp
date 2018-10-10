@@ -34,6 +34,7 @@
 *
 * Author: Eitan Marder-Eppstein
 *********************************************************************/
+#include <nav_msgs/Path.h>
 #include <pose_follower/pose_follower.h>
 #include <pluginlib/class_list_macros.hpp>
 
@@ -96,6 +97,8 @@ namespace pose_follower {
     //if turn_in_place_first is true, turn in place if our heading is more than this far from facing the goal location
     node_private.param("max_heading_diff_before_moving", max_heading_diff_before_moving_, 0.17);
 
+    global_plan_pub_ = node_private.advertise<nav_msgs::Path>("global_plan", 1);
+
     ros::NodeHandle node;
     odom_sub_ = node.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&PoseFollower::odomCallback, this, _1));
     vel_pub_ = node.advertise<geometry_msgs::Twist>("cmd_vel", 10);
@@ -140,6 +143,25 @@ namespace pose_follower {
     return fabs(base_odom.twist.twist.angular.z) <= rot_stopped_velocity_
       && fabs(base_odom.twist.twist.linear.x) <= trans_stopped_velocity_
       && fabs(base_odom.twist.twist.linear.y) <= trans_stopped_velocity_;
+  }
+
+  void PoseFollower::publishPlan(const std::vector<geometry_msgs::PoseStamped> &path,
+                               const ros::Publisher &pub) {
+    // given an empty path we won't do anything
+    if (path.empty())
+      return;
+
+    // create a path message
+    nav_msgs::Path gui_path;
+    gui_path.poses.resize(path.size());
+    gui_path.header.frame_id = path[0].header.frame_id;
+    gui_path.header.stamp = path[0].header.stamp;
+
+    // Extract the plan in world co-ordinates, we assume the path is all in the same frame
+    for (unsigned int i = 0; i < path.size(); i++) {
+      gui_path.poses[i] = path[i];
+    }
+    pub.publish(gui_path);
   }
 
   bool PoseFollower::computeVelocityCommands(geometry_msgs::Twist& cmd_vel){
@@ -235,6 +257,9 @@ namespace pose_follower {
       ROS_ERROR("Could not transform the global plan to the frame of the controller");
       return false;
     }
+
+    ROS_DEBUG("global plan size: %lu", global_plan_.size());
+    publishPlan(global_plan_, global_plan_pub_);
     return true;
   }
 
