@@ -71,6 +71,7 @@ namespace pose_follower {
 
       void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
       bool stopped();
+      void publishPlan(const std::vector<geometry_msgs::PoseStamped> &path, const ros::Publisher &pub);
 
       tf::TransformListener* tf_;
       costmap_2d::Costmap2DROS* costmap_ros_;
