@@ -30,7 +30,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS ${THIS_PACKAGE_ROS_DEPS} message_runtime
-  DEPENDS
+  DEPENDS SBPL
 )
 
 ##############################################################################
