@@ -86,8 +86,10 @@ private:
   unsigned char inscribed_inflated_obstacle_;
   unsigned char sbpl_cost_multiplier_;
 
-
+  std::string name_;
   costmap_2d::Costmap2DROS* costmap_ros_; /**< manages the cost map for us */
+  unsigned int current_env_width_;
+  unsigned int current_env_height_;
 
   ros::Publisher plan_pub_;
   ros::Publisher stats_publisher_;
