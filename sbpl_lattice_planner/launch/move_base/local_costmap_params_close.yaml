@@ -1,6 +1,6 @@
 local_costmap:
   publish_voxel_map: true
-  global_frame: /map
+  global_frame: map
   robot_base_frame: base_link
   update_frequency: 5.0
   publish_frequency: 2.0
