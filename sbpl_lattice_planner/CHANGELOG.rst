@@ -2,6 +2,15 @@
 Changelog for package sbpl_lattice_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Reinit on map size, footprint and costmap changes
+* Add warning when cost_scaling_factor is too large
+  Also see `#33 <https://github.com/ros-planning/navigation_experimental/issues/33>`_.
+* Fix example config for TF2 (`#30 <https://github.com/ros-planning/navigation_experimental/issues/30>`_)
+* sbpl_lattice_planner: Add missing DEPENDS SBPL
+* Contributors: Jonathan Meyer, Martin Günther
+
 0.3.1 (2018-09-05)
 ------------------
 
