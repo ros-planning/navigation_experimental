@@ -138,6 +138,17 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
       cost_possibly_circumscribed_tresh = inflation_layer->computeCost(costmap_ros_->getLayeredCostmap()->getCircumscribedRadius() / costmap_ros_->getCostmap()->getResolution());
     }
 
+    if (costMapCostToSBPLCost(cost_possibly_circumscribed_tresh) == 0) {
+      // Unfortunately, the inflation_radius is not taken into account by
+      // inflation_layer->computeCost(). If inflation_radius is smaller than
+      // the circumscribed radius, SBPL will ignore some obstacles, but we
+      // cannot detect this problem. If the cost_scaling_factor is too large,
+      // SBPL won't run into obstacles, but will always perform an expensive
+      // footprint check, no matter how far the nearest obstacle is.
+      ROS_WARN("The costmap value at the robot's circumscribed radius (%f m) is 0.", costmap_ros_->getLayeredCostmap()->getCircumscribedRadius());
+      ROS_WARN("SBPL performance will suffer.");
+      ROS_WARN("Please decrease the costmap's cost_scaling_factor.");
+    }
     if(!env_->SetEnvParameter("cost_inscribed_thresh",costMapCostToSBPLCost(costmap_2d::INSCRIBED_INFLATED_OBSTACLE))){
       ROS_ERROR("Failed to set cost_inscribed_thresh parameter");
       exit(1);
