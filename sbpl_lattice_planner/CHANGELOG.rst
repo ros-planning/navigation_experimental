@@ -2,8 +2,8 @@
 Changelog for package sbpl_lattice_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.1 (2019-01-16)
+------------------
 * Reinit on map size, footprint and costmap changes
 * Add warning when cost_scaling_factor is too large
   Also see `#33 <https://github.com/ros-planning/navigation_experimental/issues/33>`_.

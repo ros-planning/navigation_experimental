@@ -2,8 +2,8 @@
 Changelog for package assisted_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.1 (2019-01-16)
+------------------
 * Fix some includes
 * Don't link against Eigen_LIBRARIES
 * Use non deprecated pluginlib macro + headers

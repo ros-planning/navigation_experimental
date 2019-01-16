@@ -2,8 +2,8 @@
 Changelog for package sbpl_recovery
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.1 (2019-01-16)
+------------------
 * Ignore SBPL compile warning
 * Use non deprecated pluginlib macro + headers
 * Contributors: Martin Günther
