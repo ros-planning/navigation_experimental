@@ -2,8 +2,8 @@
 Changelog for package sbpl_recovery
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.2 (2019-01-16)
+------------------
 * Fix some includes
 * Contributors: Martin Günther
 

@@ -2,8 +2,8 @@
 Changelog for package pose_follower
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.2 (2019-01-16)
+------------------
 * max rotation vel in in-place rotation limited (`#27 <https://github.com/ros-planning/navigation_experimental/issues/27>`_)
 * pose_follower: Add visualization of global plan (`#26 <https://github.com/ros-planning/navigation_experimental/issues/26>`_)
 * Contributors: Martin Günther, Pavel, sumejko92
