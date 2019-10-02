@@ -48,12 +48,15 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
+#include <pose_follower/PoseFollowerConfig.h>
+#include <dynamic_reconfigure/server.h>
 #include <base_local_planner/trajectory_planner_ros.h>
 
 namespace pose_follower {
   class PoseFollower : public nav_core::BaseLocalPlanner {
     public:
       PoseFollower();
+      ~PoseFollower();
       void initialize(std::string name, tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* costmap_ros);
       bool isGoalReached();
       bool setPlan(const std::vector<geometry_msgs::PoseStamped>& global_plan);
@@ -75,28 +78,32 @@ namespace pose_follower {
       void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
       bool stopped();
       void publishPlan(const std::vector<geometry_msgs::PoseStamped> &path, const ros::Publisher &pub);
+      void reconfigureCB(pose_follower::PoseFollowerConfig &config, uint32_t level);
 
-      tf2_ros::Buffer* tf_;
-      costmap_2d::Costmap2DROS* costmap_ros_;
+      tf2_ros::Buffer *tf_;
+      costmap_2d::Costmap2DROS *costmap_ros_;
       ros::Publisher global_plan_pub_;
-      double K_trans_, K_rot_, tolerance_trans_, tolerance_rot_;
-      double tolerance_timeout_;
+      boost::mutex odom_lock_;
+      ros::Subscriber odom_sub_;
+      nav_msgs::Odometry base_odom_;
+      ros::Time goal_reached_time_;
+      unsigned int current_waypoint_;
+      std::vector<geometry_msgs::PoseStamped> global_plan_;
+      base_local_planner::TrajectoryPlannerROS collision_planner_;
+      dynamic_reconfigure::Server<pose_follower::PoseFollowerConfig> *dsrv_;
+
+      // Parameters
       double max_vel_lin_, max_vel_th_;
       double min_vel_lin_, min_vel_th_;
       double min_in_place_vel_th_, in_place_trans_vel_;
+      double trans_stopped_velocity_, rot_stopped_velocity_;
+      double K_trans_, K_rot_, tolerance_trans_, tolerance_rot_;
+      double tolerance_timeout_;
+      int samples_;
       bool allow_backwards_;
       bool turn_in_place_first_;
       double max_heading_diff_before_moving_;
       bool holonomic_;
-      boost::mutex odom_lock_;
-      ros::Subscriber odom_sub_;
-      nav_msgs::Odometry base_odom_;
-      double trans_stopped_velocity_, rot_stopped_velocity_;
-      ros::Time goal_reached_time_;
-      unsigned int current_waypoint_; 
-      std::vector<geometry_msgs::PoseStamped> global_plan_;
-      base_local_planner::TrajectoryPlannerROS collision_planner_;
-      int samples_;
   };
 };
 #endif
