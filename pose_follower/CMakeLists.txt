@@ -4,8 +4,6 @@ set(pose_follower_ROS_DEPS nav_core base_local_planner costmap_2d roscpp tf2_geo
 
 find_package(catkin REQUIRED COMPONENTS ${pose_follower_ROS_DEPS})
 
-include_directories(include ${catkin_INCLUDE_DIRS})
-
 generate_dynamic_reconfigure_options(
   cfg/PoseFollower.cfg
 )
@@ -16,7 +14,10 @@ catkin_package(
   CATKIN_DEPENDS ${pose_follower_ROS_DEPS}
 )
 
+include_directories(include ${catkin_INCLUDE_DIRS})
+
 add_library(pose_follower src/pose_follower.cpp)
+add_dependencies(pose_follower ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(pose_follower ${catkin_LIBRARIES})
 
 install(TARGETS pose_follower
