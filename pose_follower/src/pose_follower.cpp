@@ -61,7 +61,7 @@ namespace pose_follower {
     node_private.param("k_rot", K_rot_, 2.0);
 
     //set this to true if you're using a holonomic robot
-    node_private.param("holonomic", holonomic_, false);
+    node_private.param("holonomic", holonomic_, true);
 
     global_plan_pub_ = node_private.advertise<nav_msgs::Path>("global_plan", 1);
 
