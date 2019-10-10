@@ -78,7 +78,6 @@ namespace pose_follower {
 
       tf2_ros::Buffer* tf_;
       costmap_2d::Costmap2DROS* costmap_ros_;
-      ros::Publisher vel_pub_;
       ros::Publisher global_plan_pub_;
       double K_trans_, K_rot_, tolerance_trans_, tolerance_rot_;
       double tolerance_timeout_;
