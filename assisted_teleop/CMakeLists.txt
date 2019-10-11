@@ -36,7 +36,7 @@ include_directories(
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES laser_scan_filters
+  LIBRARIES laser_scan_max_range_filter
   CATKIN_DEPENDS ${THIS_PACKAGE_ROS_DEPS}
   DEPENDS EIGEN3
 )
@@ -48,14 +48,14 @@ catkin_package(
 add_executable(assisted_teleop src/assisted_teleop.cpp)
 target_link_libraries(assisted_teleop ${catkin_LIBRARIES})
 
-add_library(laser_scan_filters src/laser_scan_filters.cpp)
-target_link_libraries(laser_scan_filters ${catkin_LIBRARIES})
+add_library(laser_scan_max_range_filter src/max_range_filter.cpp)
+target_link_libraries(laser_scan_max_range_filter ${catkin_LIBRARIES})
 
 ##############################################################################
 # Install
 ##############################################################################
 
-install(TARGETS assisted_teleop laser_scan_filters
+install(TARGETS assisted_teleop laser_scan_max_range_filter
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
