@@ -1,4 +1,4 @@
-<library path="lib/liblaser_scan_filters">
+<library path="lib/liblaser_scan_max_range_filter">
   <!--
   <class name="assisted_teleop/LaserScanMaxRangeFilter" type="assisted_teleop::LaserScanMaxRangeFilter" base_class_type="filters::FilterBase<sensor_msgs::LaserScan>">
    -->
