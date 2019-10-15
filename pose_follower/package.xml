@@ -16,6 +16,7 @@
   
   <depend>base_local_planner</depend>
   <depend>costmap_2d</depend>
+  <depend>dynamic_reconfigure</depend>
   <depend>nav_core</depend>
   <depend>nav_msgs</depend>
   <depend>pluginlib</depend>

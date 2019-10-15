@@ -43,6 +43,11 @@ PLUGINLIB_EXPORT_CLASS(pose_follower::PoseFollower, nav_core::BaseLocalPlanner)
 namespace pose_follower {
   PoseFollower::PoseFollower(): tf_(NULL), costmap_ros_(NULL) {}
 
+  PoseFollower::~PoseFollower() {
+    if (dsrv_)
+      delete dsrv_;
+  }
+
   void PoseFollower::initialize(std::string name, tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* costmap_ros){
     tf_ = tf;
     costmap_ros_ = costmap_ros;
@@ -50,59 +55,46 @@ namespace pose_follower {
     goal_reached_time_ = ros::Time::now();
     ros::NodeHandle node_private("~/" + name);
 
-    collision_planner_.initialize(name, tf_, costmap_ros_);
-
-    node_private.param("k_trans", K_trans_, 2.0);
-    node_private.param("k_rot", K_rot_, 2.0);
-
-    //within this distance to the goal, finally rotate to the goal heading (also, we've reached our goal only if we're within this dist)
-    node_private.param("tolerance_trans", tolerance_trans_, 0.02); 
-
-    //we've reached our goal only if we're within this angular distance
-    node_private.param("tolerance_rot", tolerance_rot_, 0.04);
-
-    //we've reached our goal only if we're within range for this long and stopped
-    node_private.param("tolerance_timeout", tolerance_timeout_, 0.5);
+    collision_planner_.initialize(name + "/collision_planner", tf_, costmap_ros_);
 
     //set this to true if you're using a holonomic robot
     node_private.param("holonomic", holonomic_, true);
-
-    //number of samples (scaling factors of our current desired twist) to check the validity of 
-    node_private.param("samples", samples_, 10);
-
-    //go no faster than this
-    node_private.param("max_vel_lin", max_vel_lin_, 0.9);
-    node_private.param("max_vel_th", max_vel_th_, 1.4);
-
-    //minimum velocities to keep from getting stuck
-    node_private.param("min_vel_lin", min_vel_lin_, 0.1);
-    node_private.param("min_vel_th", min_vel_th_, 0.0);
-
-    //if we're rotating in place, go at least this fast to avoid getting stuck
-    node_private.param("min_in_place_vel_th", min_in_place_vel_th_, 0.0);
-
-    //when we're near the end and would be trying to go no faster than this translationally, just rotate in place instead
-    node_private.param("in_place_trans_vel", in_place_trans_vel_, 0.0);
-
-    //we're "stopped" if we're going slower than these velocities
-    node_private.param("trans_stopped_velocity", trans_stopped_velocity_, 1e-4);
-    node_private.param("rot_stopped_velocity", rot_stopped_velocity_, 1e-4);
-
-    //if this is true, we don't care whether we go backwards or forwards
-    node_private.param("allow_backwards", allow_backwards_, false);
-
-    //if this is true, turn in place to face the new goal instead of arcing toward it
-    node_private.param("turn_in_place_first", turn_in_place_first_, false);
-
-    //if turn_in_place_first is true, turn in place if our heading is more than this far from facing the goal location
-    node_private.param("max_heading_diff_before_moving", max_heading_diff_before_moving_, 0.17);
 
     global_plan_pub_ = node_private.advertise<nav_msgs::Path>("global_plan", 1);
 
     ros::NodeHandle node;
     odom_sub_ = node.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&PoseFollower::odomCallback, this, _1));
 
+    dsrv_ = new dynamic_reconfigure::Server<pose_follower::PoseFollowerConfig>(
+        ros::NodeHandle(node_private));
+    dynamic_reconfigure::Server<pose_follower::PoseFollowerConfig>::CallbackType cb =
+        boost::bind(&PoseFollower::reconfigureCB, this, _1, _2);
+    dsrv_->setCallback(cb);
+
     ROS_DEBUG("Initialized");
+  }
+
+  void PoseFollower::reconfigureCB(pose_follower::PoseFollowerConfig &config, uint32_t level) {
+    max_vel_lin_ = config.max_vel_lin;
+    max_vel_th_ = config.max_vel_th;
+    min_vel_lin_ = config.min_vel_lin;
+    min_vel_th_ = config.min_vel_th;
+    min_in_place_vel_th_ = config.min_in_place_vel_th;
+    in_place_trans_vel_ = config.in_place_trans_vel;
+    trans_stopped_velocity_ = config.trans_stopped_velocity;
+    rot_stopped_velocity_ = config.rot_stopped_velocity;
+
+    tolerance_trans_ = config.tolerance_trans;
+    tolerance_rot_ = config.tolerance_rot;
+    tolerance_timeout_ = config.tolerance_timeout;
+
+    samples_ = config.samples;
+    allow_backwards_ = config.allow_backwards;
+    turn_in_place_first_ = config.turn_in_place_first;
+    max_heading_diff_before_moving_ = config.max_heading_diff_before_moving;
+
+    K_trans_ = config.k_trans;
+    K_rot_ = config.k_rot;
   }
 
   void PoseFollower::odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
