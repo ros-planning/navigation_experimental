@@ -2,8 +2,8 @@
 Changelog for package goal_passer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.3 (2019-10-15)
+------------------
 * Add READMEs
 * Contributors: Martin Günther
 

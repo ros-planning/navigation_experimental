@@ -2,8 +2,8 @@
 Changelog for package pose_base_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.3 (2019-10-15)
+------------------
 * Add READMEs
 * Contributors: Martin Günther
 

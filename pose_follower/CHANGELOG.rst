@@ -2,8 +2,8 @@
 Changelog for package pose_follower
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.3 (2019-10-15)
+------------------
 * Add dynamic reconfigure to pose_follower (`#40 <https://github.com/ros-planning/navigation_experimental/issues/40>`_)
   Similar to the other available local planners, this commit adds dynamic reconfigure to pose_follower. In addition to this, the collision_planner parameters (used for detecting illegal trajectory) have been moved to the `PoseFollower/collision_planner` namespace.
   Major ROS API changes:
