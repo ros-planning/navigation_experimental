@@ -57,9 +57,6 @@ namespace pose_follower {
 
     collision_planner_.initialize(name + "/collision_planner", tf_, costmap_ros_);
 
-    node_private.param("k_trans", K_trans_, 2.0);
-    node_private.param("k_rot", K_rot_, 2.0);
-
     //set this to true if you're using a holonomic robot
     node_private.param("holonomic", holonomic_, true);
 
@@ -95,6 +92,9 @@ namespace pose_follower {
     allow_backwards_ = config.allow_backwards;
     turn_in_place_first_ = config.turn_in_place_first;
     max_heading_diff_before_moving_ = config.max_heading_diff_before_moving;
+
+    K_trans_ = config.k_trans;
+    K_rot_ = config.k_rot;
   }
 
   void PoseFollower::odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
