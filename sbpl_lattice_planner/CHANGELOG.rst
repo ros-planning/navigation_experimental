@@ -2,6 +2,11 @@
 Changelog for package sbpl_lattice_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add READMEs
+* Contributors: Martin Günther
+
 0.2.1 (2019-01-16)
 ------------------
 * Reinit on map size, footprint and costmap changes

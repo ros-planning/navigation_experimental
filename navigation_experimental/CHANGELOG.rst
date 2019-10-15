@@ -2,6 +2,9 @@
 Changelog for package navigation_experimental
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.2.1 (2019-01-16)
 ------------------
 
