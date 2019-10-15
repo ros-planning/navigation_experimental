@@ -2,8 +2,8 @@
 Changelog for package assisted_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.2 (2019-10-15)
+------------------
 * assisted_teleop: Rename library laser_scan_filters
   This fixes a name clash with the package laser_filters.
   Fixes `#42 <https://github.com/ros-planning/navigation_experimental/issues/42>`_ .
