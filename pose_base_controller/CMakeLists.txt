@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5.1)
+cmake_policy(SET CMP0048 NEW)
 project(pose_base_controller)
 
 find_package(catkin REQUIRED COMPONENTS actionlib move_base_msgs nav_msgs roscpp tf2_geometry_msgs tf2_ros geometry_msgs)
