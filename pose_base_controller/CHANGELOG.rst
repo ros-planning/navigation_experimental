@@ -2,6 +2,11 @@
 Changelog for package pose_base_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Initial release into noetic* Set cmake_policy CMP0048 to fix warning
+* Contributors: Martin Günther
+
 0.3.3 (2019-10-15)
 ------------------
 * Add READMEs

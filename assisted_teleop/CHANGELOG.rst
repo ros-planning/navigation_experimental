@@ -2,6 +2,11 @@
 Changelog for package assisted_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Initial release into noetic* Set cmake_policy CMP0048 to fix warning
+* Contributors: Martin Günther
+
 0.3.3 (2019-10-15)
 ------------------
 * assisted_teleop: Rename library laser_scan_filters

@@ -2,6 +2,11 @@
 Changelog for package pose_follower
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Initial release into noetic* Set cmake_policy CMP0048 to fix warning
+* Contributors: Martin Günther
+
 0.3.3 (2019-10-15)
 ------------------
 * Add dynamic reconfigure to pose_follower (`#40 <https://github.com/ros-planning/navigation_experimental/issues/40>`_)
