@@ -35,9 +35,9 @@
 * Author: Eitan Marder-Eppstein
 *********************************************************************/
 #include "assisted_teleop/max_range_filter.h"
-#include "sensor_msgs/LaserScan.h"
-#include "filters/filter_base.h"
+#include <sensor_msgs/LaserScan.h>
+#include <filters/filter_base.hpp>
 
-#include "pluginlib/class_list_macros.hpp"
+#include <pluginlib/class_list_macros.hpp>
 
 PLUGINLIB_EXPORT_CLASS(assisted_teleop::LaserScanMaxRangeFilter, filters::FilterBase<sensor_msgs::LaserScan>)

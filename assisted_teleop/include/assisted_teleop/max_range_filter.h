@@ -37,7 +37,7 @@
 #ifndef LASER_SCAN_MAX_RANGE_FILTER_H_
 #define LASER_SCAN_MAX_RANGE_FILTER_H_
 
-#include <filters/filter_base.h>
+#include <filters/filter_base.hpp>
 #include <sensor_msgs/LaserScan.h>
 
 namespace assisted_teleop
