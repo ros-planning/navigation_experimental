@@ -210,7 +210,7 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
     ROS_INFO("[sbpl_lattice_planner] Initialized successfully");
     plan_pub_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
     stats_publisher_ = private_nh.advertise<sbpl_lattice_planner::SBPLLatticePlannerStats>("sbpl_lattice_planner_stats", 1);
-    sbpl_plan_footprint_pub_ = private_nh.advertise<visualization_msgs::Marker>("sbpl_plan_footprint_array", 1);
+    sbpl_plan_footprint_pub_ = private_nh.advertise<visualization_msgs::Marker>("footprint_markers", 1);
     
     initialized_ = true;
   }
@@ -473,20 +473,19 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
 void SBPLLatticePlanner::getFootprintList(const std::vector<EnvNAVXYTHETALAT3Dpt_t> &sbpl_path,
                                         const std::string &path_frame_id,
                                         visualization_msgs::Marker & ma)
- { 
-   //ma.resize(1); 
+ {  
    ma.header.frame_id = path_frame_id;
    ma.header.stamp = ros::Time();
    ma.ns = "sbpl_robot_footprint";
    ma.id = 0;
    ma.type = visualization_msgs::Marker::LINE_LIST;
    ma.action = visualization_msgs::Marker::ADD;
-   ma.lifetime = ros::Duration(2);
    ma.scale.x = 0.05;
    ma.color.a = 1.0;
    ma.color.r = 0.0;
    ma.color.g = 0.0;
    ma.color.b = 1.0;
+   ma.pose.orientation.w = 1.0;
 
    for(unsigned int i=0; i <  sbpl_path.size(); i= i+visualizer_skip_poses_)
    {
@@ -502,8 +501,6 @@ void SBPLLatticePlanner::getFootprintList(const std::vector<EnvNAVXYTHETALAT3Dpt
  
      for(unsigned int i=0; i < transformed_rfp.size(); i++)
        ma.points.push_back(transformed_rfp[i]);
- 
-
    }
     return; 
  }
@@ -532,7 +529,4 @@ void SBPLLatticePlanner::transformFootprintToEdges(const geometry_msgs::Pose &ro
    }
    return;
  }
-
-
-
 };
