@@ -9,7 +9,7 @@ using namespace std;
 // ROS
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
 // Costmap used for the map representation
 #include <costmap_2d/costmap_2d_ros.h>
 
