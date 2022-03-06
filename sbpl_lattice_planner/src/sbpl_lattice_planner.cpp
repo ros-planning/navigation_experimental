@@ -41,8 +41,7 @@
 #include <sbpl_lattice_planner/SBPLLatticePlannerStats.h>
 
 #include <costmap_2d/inflation_layer.h>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf/transform_broadcaster.h>
+#include <tf/transform_datatypes.h>
 
 using namespace std;
 using namespace ros;
@@ -124,9 +123,7 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
 
     name_ = name;
     costmap_ros_ = costmap_ros;
-
     footprint_ = costmap_ros_->getRobotFootprint();
-    robot_footprint_ = footprint_;
 
     if ("XYThetaLattice" == environment_type_){
       ROS_DEBUG("Using a 3D costmap for theta lattice\n");
@@ -497,7 +494,7 @@ void SBPLLatticePlanner::getFootprintList(const std::vector<EnvNAVXYTHETALAT3Dpt
      tf::Quaternion quat;
      quat.setRPY(0.0,0.0,sbpl_path[i].theta);
      tf::quaternionTFToMsg(quat,robot_pose.orientation);
-     transformFootprintToEdges(robot_pose,robot_footprint_,transformed_rfp);
+     transformFootprintToEdges(robot_pose,footprint_,transformed_rfp);
  
      for(unsigned int i=0; i < transformed_rfp.size(); i++)
        ma.points.push_back(transformed_rfp[i]);

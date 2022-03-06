@@ -102,7 +102,6 @@ private:
   std::string name_;
   costmap_2d::Costmap2DROS* costmap_ros_; /**< manages the cost map for us */
   std::vector<geometry_msgs::Point> footprint_;
-  std::vector<geometry_msgs::Point> robot_footprint_;
   unsigned int current_env_width_;
   unsigned int current_env_height_;
 
