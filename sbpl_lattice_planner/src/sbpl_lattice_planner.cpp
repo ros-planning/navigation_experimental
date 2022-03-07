@@ -41,6 +41,7 @@
 #include <sbpl_lattice_planner/SBPLLatticePlannerStats.h>
 
 #include <costmap_2d/inflation_layer.h>
+#include <tf2/LinearMath/Quaternion.h>
 #include <tf/transform_datatypes.h>
 
 using namespace std;
