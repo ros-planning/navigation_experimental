@@ -50,6 +50,10 @@ roslaunch sbpl_lattice_planner move_base_sbpl_fake_localization_2.5cm.launch
   solution) of the first and final solutions, and the size of the final
   solution.
 
+`~/SBPLLatticePlanner/footprint_markers` ([visualization\_msgs/Marker](http://docs.ros.org/api/visualization_msgs/html/msg/Marker.html))
+
+- The footprint markers along the planned path (for visualization in RViz).
+
 ### Subscribed Topics
 
 None
@@ -123,6 +127,14 @@ None
   obstacle thresh, we can get obstacle padding that is less harsh and more
   reasonable. This will make the planner more likely to choose to go through
   more narrow areas such as doorways.
+
+`~/SBPLLatticePlanner/publish_footprint_path` (`bool`, default: true)
+
+- Whether or not to publish the `footprint_markers` topic.
+
+`~/SBPLLatticePlanner/visualizer_skip_poses` (`int`, default: 5)
+
+- Only publish every nth pose on the `footprint_markers` topic.
 
 
 ## Customizing your Motion Primitives

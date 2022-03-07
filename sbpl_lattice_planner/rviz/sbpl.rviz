@@ -123,6 +123,14 @@ Visualization Manager:
       Name: Map
       Topic: /move_base_node/local_costmap/costmap
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /move_base_node/SBPLLatticePlanner/footprint_markers
+      Name: Footprint Markers
+      Namespaces:
+        sbpl_robot_footprint: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48

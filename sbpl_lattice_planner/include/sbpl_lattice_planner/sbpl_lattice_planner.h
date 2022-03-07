@@ -9,6 +9,7 @@ using namespace std;
 // ROS
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <visualization_msgs/Marker.h>
 
 // Costmap used for the map representation
 #include <costmap_2d/costmap_2d_ros.h>
@@ -67,6 +68,13 @@ private:
 
   unsigned char computeCircumscribedCost();
 
+  static void transformFootprintToEdges(const geometry_msgs::Pose& robot_pose,
+                                        const std::vector<geometry_msgs::Point>& footprint,
+                                        std::vector<geometry_msgs::Point>& out_footprint);
+
+  void getFootprintList(const std::vector<EnvNAVXYTHETALAT3Dpt_t>& sbpl_path, const std::string& path_frame_id,
+                        visualization_msgs::Marker& ma);
+
   bool initialized_;
 
   SBPLPlanner* planner_;
@@ -89,6 +97,9 @@ private:
   unsigned char circumscribed_cost_;
   unsigned char sbpl_cost_multiplier_;
 
+  bool publish_footprint_path_;
+  int visualizer_skip_poses_;
+
   std::string name_;
   costmap_2d::Costmap2DROS* costmap_ros_; /**< manages the cost map for us */
   std::vector<geometry_msgs::Point> footprint_;
@@ -97,6 +108,7 @@ private:
 
   ros::Publisher plan_pub_;
   ros::Publisher stats_publisher_;
+  ros::Publisher sbpl_plan_footprint_pub_;
 };
 };
 
