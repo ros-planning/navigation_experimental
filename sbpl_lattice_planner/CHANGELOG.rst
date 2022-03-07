@@ -2,9 +2,15 @@
 Changelog for package sbpl_lattice_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add option to publish the sbpl footprint plan (`#58 <https://github.com/ros-planning/navigation_experimental/issues/58>`_)
+* Contributors: Lotfi Zeghmi, Martin Günther
+
 0.3.4 (2020-06-19)
 ------------------
-* Initial release into noetic* Set cmake_policy CMP0048 to fix warning
+* Initial release into noetic
+* Set cmake_policy CMP0048 to fix warning
 * Contributors: Martin Günther
 
 0.3.3 (2019-10-15)

@@ -2,6 +2,11 @@
 Changelog for package assisted_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Use non-deprecated filter_base header
+* Contributors: Martin Günther
+
 0.3.4 (2020-06-19)
 ------------------
 * Initial release into noetic* Set cmake_policy CMP0048 to fix warning
