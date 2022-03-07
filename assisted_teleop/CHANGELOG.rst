@@ -2,8 +2,8 @@
 Changelog for package assisted_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.0 (2022-03-07)
+------------------
 * Use non-deprecated filter_base header
 * Contributors: Martin Günther
 
