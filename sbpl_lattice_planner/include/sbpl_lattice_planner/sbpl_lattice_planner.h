@@ -10,6 +10,7 @@ using namespace std;
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <visualization_msgs/Marker.h>
+
 // Costmap used for the map representation
 #include <costmap_2d/costmap_2d_ros.h>
 
@@ -67,13 +68,12 @@ private:
 
   unsigned char computeCircumscribedCost();
 
-  void transformFootprintToEdges(const geometry_msgs::Pose &robot_pose,
-                                          const std::vector<geometry_msgs::Point> &footprint,
-                                          std::vector<geometry_msgs::Point> &out_footprint);
+  static void transformFootprintToEdges(const geometry_msgs::Pose& robot_pose,
+                                        const std::vector<geometry_msgs::Point>& footprint,
+                                        std::vector<geometry_msgs::Point>& out_footprint);
 
-  void getFootprintList(const std::vector<EnvNAVXYTHETALAT3Dpt_t> &sbpl_path,
-                         const std::string &path_frame_id,
-                         visualization_msgs::Marker &ma);
+  void getFootprintList(const std::vector<EnvNAVXYTHETALAT3Dpt_t>& sbpl_path, const std::string& path_frame_id,
+                        visualization_msgs::Marker& ma);
 
   bool initialized_;
 
@@ -89,8 +89,6 @@ private:
   std::string cost_map_topic_; /** what topic is being used for the costmap topic */
 
   bool forward_search_; /** whether to use forward or backward search */
-  bool publish_footprint_path_;
-  int visualizer_skip_poses_;
   std::string primitive_filename_; /** where to find the motion primitives for the current robot */
   int force_scratch_limit_; /** the number of cells that have to be changed in the costmap to force the planner to plan from scratch even if its an incremental planner */
 
@@ -98,6 +96,9 @@ private:
   unsigned char inscribed_inflated_obstacle_;
   unsigned char circumscribed_cost_;
   unsigned char sbpl_cost_multiplier_;
+
+  bool publish_footprint_path_;
+  int visualizer_skip_poses_;
 
   std::string name_;
   costmap_2d::Costmap2DROS* costmap_ros_; /**< manages the cost map for us */

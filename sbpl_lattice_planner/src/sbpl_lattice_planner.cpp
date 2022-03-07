@@ -106,8 +106,6 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
     private_nh.param("initial_epsilon",initial_epsilon_,3.0);
     private_nh.param("environment_type", environment_type_, string("XYThetaLattice"));
     private_nh.param("forward_search", forward_search_, bool(false));
-    private_nh.param("publish_footprint_path", publish_footprint_path_, bool(true));
-    private_nh.param<int>("visualizer_skip_poses",visualizer_skip_poses_,5);
     private_nh.param("primitive_filename",primitive_filename_,string(""));
     private_nh.param("force_scratch_limit",force_scratch_limit_,500);
 
@@ -122,8 +120,12 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
     sbpl_cost_multiplier_ = (unsigned char) (costmap_2d::INSCRIBED_INFLATED_OBSTACLE/inscribed_inflated_obstacle_ + 1);
     ROS_DEBUG("SBPL: lethal: %uz, inscribed inflated: %uz, multiplier: %uz",lethal_obstacle,inscribed_inflated_obstacle_,sbpl_cost_multiplier_);
 
+    private_nh.param("publish_footprint_path", publish_footprint_path_, bool(true));
+    private_nh.param<int>("visualizer_skip_poses", visualizer_skip_poses_, 5);
+
     name_ = name;
     costmap_ros_ = costmap_ros;
+
     footprint_ = costmap_ros_->getRobotFootprint();
 
     if ("XYThetaLattice" == environment_type_){
@@ -209,7 +211,7 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
     plan_pub_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
     stats_publisher_ = private_nh.advertise<sbpl_lattice_planner::SBPLLatticePlannerStats>("sbpl_lattice_planner_stats", 1);
     sbpl_plan_footprint_pub_ = private_nh.advertise<visualization_msgs::Marker>("footprint_markers", 1);
-    
+
     initialized_ = true;
   }
 }
@@ -433,11 +435,13 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
   ROS_DEBUG("Plan has %d points.\n", (int)sbpl_path.size());
   ros::Time plan_time = ros::Time::now();
 
-  if (publish_footprint_path_) {
+  if (publish_footprint_path_)
+  {
     visualization_msgs::Marker sbpl_plan_footprint;
-    getFootprintList(sbpl_path,costmap_ros_->getGlobalFrameID(),sbpl_plan_footprint);
+    getFootprintList(sbpl_path, costmap_ros_->getGlobalFrameID(), sbpl_plan_footprint);
     sbpl_plan_footprint_pub_.publish(sbpl_plan_footprint);
   }
+
   //create a message for the plan 
   nav_msgs::Path gui_path;
   gui_path.poses.resize(sbpl_path.size());
@@ -468,63 +472,62 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
 
   return true;
 }
-void SBPLLatticePlanner::getFootprintList(const std::vector<EnvNAVXYTHETALAT3Dpt_t> &sbpl_path,
-                                        const std::string &path_frame_id,
-                                        visualization_msgs::Marker & ma)
- {  
-   ma.header.frame_id = path_frame_id;
-   ma.header.stamp = ros::Time();
-   ma.ns = "sbpl_robot_footprint";
-   ma.id = 0;
-   ma.type = visualization_msgs::Marker::LINE_LIST;
-   ma.action = visualization_msgs::Marker::ADD;
-   ma.scale.x = 0.05;
-   ma.color.a = 1.0;
-   ma.color.r = 0.0;
-   ma.color.g = 0.0;
-   ma.color.b = 1.0;
-   ma.pose.orientation.w = 1.0;
 
-   for(unsigned int i=0; i <  sbpl_path.size(); i= i+visualizer_skip_poses_)
-   {
-     std::vector<geometry_msgs::Point> transformed_rfp;
-     geometry_msgs::Pose robot_pose;
-     robot_pose.position.x = sbpl_path[i].x + costmap_ros_->getCostmap()->getOriginX();;
-     robot_pose.position.y = sbpl_path[i].y + costmap_ros_->getCostmap()->getOriginY();;
-     robot_pose.position.z = 0.0;
-     tf::Quaternion quat;
-     quat.setRPY(0.0,0.0,sbpl_path[i].theta);
-     tf::quaternionTFToMsg(quat,robot_pose.orientation);
-     transformFootprintToEdges(robot_pose,footprint_,transformed_rfp);
- 
-     for(unsigned int i=0; i < transformed_rfp.size(); i++)
-       ma.points.push_back(transformed_rfp[i]);
-   }
-    return; 
- }
+void SBPLLatticePlanner::getFootprintList(const std::vector<EnvNAVXYTHETALAT3Dpt_t>& sbpl_path,
+                                          const std::string& path_frame_id, visualization_msgs::Marker& ma)
+{
+  ma.header.frame_id = path_frame_id;
+  ma.header.stamp = ros::Time();
+  ma.ns = "sbpl_robot_footprint";
+  ma.id = 0;
+  ma.type = visualization_msgs::Marker::LINE_LIST;
+  ma.action = visualization_msgs::Marker::ADD;
+  ma.scale.x = 0.05;
+  ma.color.a = 1.0;
+  ma.color.r = 0.0;
+  ma.color.g = 0.0;
+  ma.color.b = 1.0;
+  ma.pose.orientation.w = 1.0;
 
-void SBPLLatticePlanner::transformFootprintToEdges(const geometry_msgs::Pose &robot_pose,
-                                          const std::vector<geometry_msgs::Point> &footprint,
-                                          std::vector<geometry_msgs::Point> &out_footprint)
- {
-   out_footprint.resize(2*footprint.size());
-   double yaw = tf::getYaw(robot_pose.orientation);
-   for(unsigned int i=0; i < footprint.size(); i++)
-   {
-     out_footprint[2*i].x = robot_pose.position.x + cos(yaw)*footprint[i].x - sin(yaw)*footprint[i].y;
-     out_footprint[2*i].y = robot_pose.position.y + sin(yaw)*footprint[i].x + cos(yaw)*footprint[i].y;
-     if(i == 0)
-     {
-       out_footprint.back().x = out_footprint[i].x;
-       out_footprint.back().y = out_footprint[i].y;
+  for (unsigned int i = 0; i < sbpl_path.size(); i = i + visualizer_skip_poses_)
+  {
+    std::vector<geometry_msgs::Point> transformed_rfp;
+    geometry_msgs::Pose robot_pose;
+    robot_pose.position.x = sbpl_path[i].x + costmap_ros_->getCostmap()->getOriginX();
+    ;
+    robot_pose.position.y = sbpl_path[i].y + costmap_ros_->getCostmap()->getOriginY();
+    ;
+    robot_pose.position.z = 0.0;
+    tf::Quaternion quat;
+    quat.setRPY(0.0, 0.0, sbpl_path[i].theta);
+    tf::quaternionTFToMsg(quat, robot_pose.orientation);
+    transformFootprintToEdges(robot_pose, footprint_, transformed_rfp);
 
-     }
-     else
-     {
-       out_footprint[2*i-1].x = out_footprint[2*i].x;
-       out_footprint[2*i-1].y = out_footprint[2*i].y;
-     }
-   }
-   return;
- }
+    for (auto & point : transformed_rfp)
+      ma.points.push_back(point);
+  }
+}
+
+void SBPLLatticePlanner::transformFootprintToEdges(const geometry_msgs::Pose& robot_pose,
+                                                   const std::vector<geometry_msgs::Point>& footprint,
+                                                   std::vector<geometry_msgs::Point>& out_footprint)
+{
+  out_footprint.resize(2 * footprint.size());
+  double yaw = tf::getYaw(robot_pose.orientation);
+  for (unsigned int i = 0; i < footprint.size(); i++)
+  {
+    out_footprint[2 * i].x = robot_pose.position.x + cos(yaw) * footprint[i].x - sin(yaw) * footprint[i].y;
+    out_footprint[2 * i].y = robot_pose.position.y + sin(yaw) * footprint[i].x + cos(yaw) * footprint[i].y;
+    if (i == 0)
+    {
+      out_footprint.back().x = out_footprint[i].x;
+      out_footprint.back().y = out_footprint[i].y;
+    }
+    else
+    {
+      out_footprint[2 * i - 1].x = out_footprint[2 * i].x;
+      out_footprint[2 * i - 1].y = out_footprint[2 * i].y;
+    }
+  }
+}
 };
