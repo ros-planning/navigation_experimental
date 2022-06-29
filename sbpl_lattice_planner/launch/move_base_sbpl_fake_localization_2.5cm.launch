@@ -3,7 +3,7 @@
 
   <include file="$(find sbpl_lattice_planner)/launch/move_base/move_base_sbpl.xml"/>
 
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find sbpl_lattice_planner)/worlds/willow.pgm 0.025" />
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find sbpl_lattice_planner)/worlds/willow.yaml" />
 
   <node pkg="stage_ros" type="stageros" name="stageros" args="$(find sbpl_lattice_planner)/worlds/willow.world" respawn="false" >
     <param name="base_watchdog_timeout" value="0.2"/>
