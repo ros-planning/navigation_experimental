@@ -136,6 +136,10 @@ None
 
 - Only publish every nth pose on the `footprint_markers` topic.
 
+`~/SBPLLatticePlanner/allow_unknown` (`bool`, default: false)
+
+- Whether or not to allow planning through unknown space.
+
 
 ## Customizing your Motion Primitives
 
