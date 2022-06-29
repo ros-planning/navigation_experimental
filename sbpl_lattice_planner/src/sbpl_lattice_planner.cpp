@@ -123,7 +123,7 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
     private_nh.param("publish_footprint_path", publish_footprint_path_, bool(true));
     private_nh.param<int>("visualizer_skip_poses", visualizer_skip_poses_, 5);
 
-    private_nh.param("allow_unknown", allow_unknown_, bool(false));
+    private_nh.param("allow_unknown", allow_unknown_, bool(true));
 
     name_ = name;
     costmap_ros_ = costmap_ros;
