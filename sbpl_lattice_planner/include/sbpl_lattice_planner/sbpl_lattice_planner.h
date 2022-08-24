@@ -100,6 +100,8 @@ private:
   bool publish_footprint_path_;
   int visualizer_skip_poses_;
 
+  bool allow_unknown_;
+
   std::string name_;
   costmap_2d::Costmap2DROS* costmap_ros_; /**< manages the cost map for us */
   std::vector<geometry_msgs::Point> footprint_;
