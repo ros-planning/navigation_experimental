@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>twist_recovery</name>
-  <version>0.4.0</version>
+  <version>0.4.1</version>
   <description>
     A recovery behavior that performs a particular used-defined twist.
   </description>

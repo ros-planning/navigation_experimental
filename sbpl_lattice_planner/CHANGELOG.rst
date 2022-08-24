@@ -2,8 +2,8 @@
 Changelog for package sbpl_lattice_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.1 (2022-08-24)
+------------------
 * Implement allow_unknown feature (`#60 <https://github.com/ros-planning/navigation_experimental/issues/60>`_)
 * debug move_base launch files: Fix warnings, track unknown space
 * Contributors: Martin Günther, Martin Peris
