@@ -44,6 +44,19 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 target_compile_options(${PROJECT_NAME} PUBLIC "-Wno-terminate")  # suppress warning from included SBPL header
 
 ##############################################################################
+# Tests
+##############################################################################
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(test_sbpl_lattice_planner_exact_goal
+    test/sbpl_lattice_planner_exact_goal.test
+    test/test_sbpl_lattice_planner_exact_goal.cpp)
+  target_link_libraries(test_sbpl_lattice_planner_exact_goal ${PROJECT_NAME} ${catkin_LIBRARIES})
+  add_dependencies(test_sbpl_lattice_planner_exact_goal ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+endif()
+
+##############################################################################
 # Install
 ##############################################################################
 
