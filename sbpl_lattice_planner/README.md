@@ -140,6 +140,14 @@ None
 
 - Whether or not to allow planning through unknown space.
 
+`~/SBPLLatticePlanner/goal_blend_distance` (`double`, default: 0.0)
+
+- 0.0 disables blending. With a positive value, the last
+  `goal_blend_distance` meters of path length of the plan are blended from the
+  lattice end pose into the exact requested goal pose, so that plans end at the
+  goal instead of up to one lattice sample and half a cell/heading away from
+  it. This helps local planners that steer to the last pose of the plan.
+
 
 ## Customizing your Motion Primitives
 

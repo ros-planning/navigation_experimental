@@ -44,10 +44,11 @@
  * set, the planner is supposed to blend the end of the plan into the exact
  * requested goal pose.
  *
- * The first three tests reproduce the documented endpoint problem and must pass
- * with blending disabled (the default, and explicitly 0.0). The last test is
- * the acceptance test for goal_blend_distance and fails until the blending is
- * implemented.
+ * The first three integration tests run with blending disabled (the default,
+ * and explicitly 0.0): two reproduce the documented endpoint problem and one
+ * guards the zero parameter. The fourth is the acceptance test for
+ * goal_blend_distance and runs with blending enabled. Below them, the BlendUnit*
+ * tests exercise blendIntoGoal() directly.
  */
 
 #include <angles/angles.h>
@@ -310,6 +311,314 @@ TEST_F(SbplLatticePlannerExactGoalTest, BlendIntoGoalEnabled)
     const double spacing = positionError(plan[i].pose, plan[i - 1].pose);
     ASSERT_LT(spacing, 0.1) << "adjacent plan poses too far apart at plan pose " << i;
   }
+}
+
+// Synthetic straight-line plan: 21 poses from (0, 0) to (1, 0) in 0.05 m steps.
+std::vector<geometry_msgs::PoseStamped> makeStraightLinePlan(double yaw)
+{
+  std::vector<geometry_msgs::PoseStamped> plan;
+  for (int i = 0; i <= 20; ++i)
+  {
+    plan.push_back(makePose(0.05 * i, 0.0, yaw));
+  }
+  return plan;
+}
+
+// Nominal path length of `steps` consecutive 0.05 m steps. Accumulated by
+// repeated addition because 6 * 0.05 evaluates to 0.30000000000000004, which
+// would fail a <= 0.3 m blend-distance check.
+double stepSum(size_t steps)
+{
+  double length = 0.0;
+  for (size_t i = 0; i < steps; ++i)
+  {
+    length += CELL_SIZE;
+  }
+  return length;
+}
+
+// The tail is offset affinely: pose i moves by w * (dx, dy, dyaw), with
+// w = 1 - distance_to_end / tail_length, and the last pose is the goal. The
+// blend distance 0.26 m is deliberately off the step boundary: five steps cover
+// 0.25 m (the blended tail), six steps would need 0.30 m.
+TEST(SbplLatticePlannerBlendIntoGoalUnit, BlendUnitAffineOffset)
+{
+  std::vector<geometry_msgs::PoseStamped> plan = makeStraightLinePlan(0.0);
+  const std::vector<geometry_msgs::PoseStamped> original = plan;
+  const geometry_msgs::PoseStamped goal = makePose(1.02, 0.01, 0.3);
+
+  const double blend_distance = 0.26;
+  sbpl_lattice_planner::blendIntoGoal(goal, blend_distance, plan);
+
+  ASSERT_EQ(plan.size(), original.size());
+
+  // The final pose is exactly the requested goal.
+  EXPECT_LT(positionError(plan.back().pose, goal.pose), 1e-9);
+  EXPECT_LT(yawError(plan.back().pose, goal.pose), 1e-9);
+  EXPECT_LT(std::abs(tf2::getYaw(plan.back().pose.orientation) - 0.3), 1e-9);
+
+  const double dx = goal.pose.position.x - original.back().pose.position.x;
+  const double dy = goal.pose.position.y - original.back().pose.position.y;
+  const double dyaw = angles::shortest_angular_distance(tf2::getYaw(original.back().pose.orientation),
+                                                        tf2::getYaw(goal.pose.orientation));
+  EXPECT_LT(std::abs(dyaw - 0.3), 1e-9);
+
+  // The walk back from the plan end stops once the next step would exceed the
+  // blend distance: five 0.05 m steps (0.25 m <= 0.26 m) are the blended tail,
+  // the sixth step (0.30 m > 0.26 m) is not.
+  const size_t tail_poses = 5;
+  const double tail_length = stepSum(tail_poses);
+  ASSERT_LE(tail_length, blend_distance);
+  ASSERT_GT(tail_length + CELL_SIZE, blend_distance);
+  const size_t first_blended = plan.size() - 1 - tail_poses;
+  ASSERT_EQ(first_blended, 15u);
+
+  for (size_t i = 0; i < plan.size(); ++i)
+  {
+    const double arc_distance = CELL_SIZE * static_cast<double>(plan.size() - 1 - i);
+    if (i < first_blended)
+    {
+      // Poses 0..14 are farther than goal_blend_distance from the plan end and
+      // must not be touched at all.
+      EXPECT_LT(positionError(plan[i].pose, original[i].pose), 1e-12) << "pose " << i << " should be unchanged";
+      EXPECT_LT(yawError(plan[i].pose, original[i].pose), 1e-12) << "pose " << i << " should be unchanged";
+    }
+    else if (i + 1 < plan.size())
+    {
+      // Poses 15..19 are blended by an affine offset towards the goal; pose 15
+      // sits exactly tail_length from the end, so it has w = 0.
+      const double w = 1.0 - arc_distance / tail_length;
+      const double expected_x = original[i].pose.position.x + w * dx;
+      const double expected_y = original[i].pose.position.y + w * dy;
+      const double expected_yaw = tf2::getYaw(original[i].pose.orientation) + w * dyaw;
+      EXPECT_LT(std::hypot(plan[i].pose.position.x - expected_x, plan[i].pose.position.y - expected_y), 1e-9)
+          << "pose " << i;
+      EXPECT_LT(std::abs(angles::shortest_angular_distance(tf2::getYaw(plan[i].pose.orientation), expected_yaw)), 1e-9)
+          << "pose " << i;
+    }
+  }
+}
+
+// A plan that ends with an in-place turn must not degenerate: the
+// zero-displacement steps contribute no length but are part of the tail walk,
+// so the trailing turn gets w = 1 and is translated to the goal position (with
+// its yaw shifted by the full dyaw) instead of the plan jumping sideways in its
+// last step.
+TEST(SbplLatticePlannerBlendIntoGoalUnit, BlendUnitTrailingInPlaceTurn)
+{
+  // 16 straight poses at x = CELL_SIZE * i, yaw 0. The last one is the last
+  // straight pose and defines the plan-end xy.
+  const size_t straight_poses = 16;
+  std::vector<geometry_msgs::PoseStamped> plan;
+  for (size_t i = 0; i < straight_poses; ++i)
+  {
+    plan.push_back(makePose(CELL_SIZE * static_cast<double>(i), 0.0, 0.0));
+  }
+  const size_t last_straight = straight_poses - 1;
+  const double end_xy = CELL_SIZE * static_cast<double>(last_straight);
+  // Three in-place turn poses at the plan-end xy with yaw 0.0, 0.2, 0.4.
+  const double turn_yaws[] = {0.0, 0.2, 0.4};
+  const size_t turn_poses = sizeof(turn_yaws) / sizeof(turn_yaws[0]);
+  for (size_t k = 0; k < turn_poses; ++k)
+  {
+    plan.push_back(makePose(end_xy, 0.0, turn_yaws[k]));
+  }
+  const size_t first_turn = last_straight + 1;
+  const std::vector<geometry_msgs::PoseStamped> original = plan;
+
+  const geometry_msgs::PoseStamped goal = makePose(0.79, 0.01, 0.45);
+  // Deliberately off the step boundary: at 0.30 m, whether the sixth step still
+  // fits depends on a 1-ULP difference in the accumulated length
+  // (0.30000000000000004 > 0.30 versus 0.29999999999999993 <= 0.30).
+  const double blend_distance = 0.31;
+  sbpl_lattice_planner::blendIntoGoal(goal, blend_distance, plan);
+
+  ASSERT_EQ(plan.size(), original.size());
+  ASSERT_EQ(plan.size(), straight_poses + turn_poses);
+
+  // The final pose is exactly the requested goal.
+  EXPECT_LT(positionError(plan.back().pose, goal.pose), 1e-9);
+  EXPECT_LT(yawError(plan.back().pose, goal.pose), 1e-9);
+
+  // Walking back from the plan end: the three zero-displacement steps
+  // (18->17->16->15) add no length, then CELL_SIZE steps accumulate until the
+  // next one would exceed the blend distance. Six steps cover 0.30 m and fit
+  // into 0.31 m; the seventh would reach 0.35 m and does not. The two
+  // assertions pin the derived step count for the given blend_distance.
+  const size_t tail_steps = static_cast<size_t>(blend_distance / CELL_SIZE);
+  const double tail_length = stepSum(tail_steps);
+  ASSERT_LE(tail_length, blend_distance);
+  ASSERT_GT(tail_length + CELL_SIZE, blend_distance);
+
+  // Pose `first_blended` is the boundary anchor of the tail: it sits exactly
+  // tail_length from the plan end, so its weight is 1 - tail_length /
+  // tail_length = 0 and it stays unchanged.
+  const size_t first_blended = last_straight - tail_steps;
+
+  const double dx = goal.pose.position.x - original.back().pose.position.x;
+  const double dy = goal.pose.position.y - original.back().pose.position.y;
+  const double dyaw = angles::shortest_angular_distance(tf2::getYaw(original.back().pose.orientation),
+                                                        tf2::getYaw(goal.pose.orientation));
+  EXPECT_LT(std::abs(dyaw - 0.05), 1e-9);
+
+  // Poses outside the blended tail, plus the anchor (w = 0): unchanged.
+  for (size_t i = 0; i <= first_blended; ++i)
+  {
+    EXPECT_LT(positionError(plan[i].pose, original[i].pose), 1e-12) << "pose " << i << " should be unchanged";
+    EXPECT_LT(yawError(plan[i].pose, original[i].pose), 1e-12) << "pose " << i << " should be unchanged";
+  }
+
+  // Straight poses between the anchor and the last straight pose follow the
+  // affine rule: w = 1 - arc_distance / tail_length with the path distance to
+  // the plan end.
+  for (size_t i = first_blended + 1; i < last_straight; ++i)
+  {
+    const double arc_distance = positionError(original[i].pose, original.back().pose);
+    const double w = 1.0 - arc_distance / tail_length;
+    const double expected_x = original[i].pose.position.x + w * dx;
+    const double expected_y = original[i].pose.position.y + w * dy;
+    const double expected_yaw = tf2::getYaw(original[i].pose.orientation) + w * dyaw;
+    EXPECT_LT(std::hypot(plan[i].pose.position.x - expected_x, plan[i].pose.position.y - expected_y), 1e-9)
+        << "pose " << i;
+    EXPECT_LT(std::abs(angles::shortest_angular_distance(tf2::getYaw(plan[i].pose.orientation), expected_yaw)), 1e-9)
+        << "pose " << i;
+  }
+
+  // The tail poses whose xy already equals the plan-end xy (the last straight
+  // pose and the turn poses) have w = 1: their position is exactly the goal
+  // position and their yaw is shifted by the full dyaw.
+  for (size_t i = last_straight; i < plan.size(); ++i)
+  {
+    EXPECT_LT(positionError(plan[i].pose, goal.pose), 1e-9) << "pose " << i;
+    const double expected_yaw = tf2::getYaw(original[i].pose.orientation) + dyaw;
+    EXPECT_LT(std::abs(angles::shortest_angular_distance(tf2::getYaw(plan[i].pose.orientation), expected_yaw)), 1e-9)
+        << "pose " << i;
+  }
+
+  // The in-place turn is preserved: the three turn poses end at
+  // turn_yaws[k] + dyaw, a monotone sequence, instead of collapsing to one
+  // heading.
+  for (size_t k = 0; k < turn_poses; ++k)
+  {
+    const double expected_yaw = turn_yaws[k] + dyaw;
+    EXPECT_LT(
+        std::abs(angles::shortest_angular_distance(tf2::getYaw(plan[first_turn + k].pose.orientation), expected_yaw)),
+        1e-9)
+        << "pose " << first_turn + k;
+  }
+  EXPECT_LT(std::abs(tf2::getYaw(plan[first_turn].pose.orientation) - 0.05), 1e-9);
+  EXPECT_LT(std::abs(tf2::getYaw(plan[first_turn + 1].pose.orientation) - 0.25), 1e-9);
+  EXPECT_LT(std::abs(tf2::getYaw(plan[first_turn + 2].pose.orientation) - 0.45), 1e-9);
+  for (size_t i = last_straight; i + 1 < plan.size(); ++i)
+  {
+    const double current_yaw = tf2::getYaw(plan[i].pose.orientation);
+    const double next_yaw = tf2::getYaw(plan[i + 1].pose.orientation);
+    EXPECT_GE(next_yaw - current_yaw, -1e-12) << "tail yaw not monotone at pose " << i;
+  }
+}
+
+// Yaw 3.0 -> -3.0 must use the +0.28319 rad short way around, not 6.0+ rad.
+TEST(SbplLatticePlannerBlendIntoGoalUnit, BlendUnitShortestAngularDistance)
+{
+  std::vector<geometry_msgs::PoseStamped> plan = makeStraightLinePlan(3.0);
+  const std::vector<geometry_msgs::PoseStamped> original = plan;
+  const geometry_msgs::PoseStamped goal = makePose(1.02, 0.01, -3.0);
+
+  const double blend_distance = 0.31;
+  sbpl_lattice_planner::blendIntoGoal(goal, blend_distance, plan);
+
+  ASSERT_EQ(plan.size(), original.size());
+
+  EXPECT_LT(positionError(plan.back().pose, goal.pose), 1e-9);
+  EXPECT_LT(std::abs(tf2::getYaw(plan.back().pose.orientation) - (-3.0)), 1e-9);
+
+  const double dyaw = angles::shortest_angular_distance(3.0, -3.0);
+  EXPECT_LT(std::abs(dyaw - 0.283185307179586), 1e-9);
+
+  // The walk back from the plan end accumulates CELL_SIZE steps: six of them
+  // cover 0.30 m and fit into 0.31 m, the seventh would not. The blended tail
+  // therefore starts at pose 14 (w = 0); the weight of an interior pose uses
+  // that walk length, not the blend distance.
+  const size_t tail_steps = static_cast<size_t>(blend_distance / CELL_SIZE);
+  const double tail_length = stepSum(tail_steps);
+  ASSERT_LE(tail_length, blend_distance);
+  ASSERT_GT(tail_length + CELL_SIZE, blend_distance);
+  const size_t first_blended = plan.size() - 1 - tail_steps;
+  ASSERT_EQ(first_blended, 14u);
+
+  // Pose 16 is four steps (0.20 m) from the plan end: w = 1 - 0.20 / 0.30.
+  const size_t i = 16;
+  const double arc_distance = CELL_SIZE * static_cast<double>(plan.size() - 1 - i);
+  const double w = 1.0 - arc_distance / tail_length;
+  const double expected_yaw = 3.0 + w * dyaw;
+  EXPECT_LT(std::abs(angles::shortest_angular_distance(tf2::getYaw(plan[i].pose.orientation), expected_yaw)), 1e-9);
+}
+
+// goal_blend_distance = 0.0 is a no-op, including not setting the last pose to
+// the goal.
+TEST(SbplLatticePlannerBlendIntoGoalUnit, BlendUnitZeroDistanceNoOp)
+{
+  std::vector<geometry_msgs::PoseStamped> plan = makeStraightLinePlan(0.0);
+  const std::vector<geometry_msgs::PoseStamped> original = plan;
+  const geometry_msgs::PoseStamped goal = makePose(1.02, 0.01, 0.3);
+
+  sbpl_lattice_planner::blendIntoGoal(goal, 0.0, plan);
+
+  ASSERT_EQ(plan.size(), original.size());
+  for (size_t i = 0; i < plan.size(); ++i)
+  {
+    EXPECT_LT(positionError(plan[i].pose, original[i].pose), 1e-12) << "pose " << i;
+    EXPECT_LT(yawError(plan[i].pose, original[i].pose), 1e-12) << "pose " << i;
+  }
+}
+
+// A blend distance below one step size (0.01 m < 0.05 m) makes the walk back
+// break immediately: only the final pose changes (it becomes the goal), every
+// other pose stays bit-identical.
+TEST(SbplLatticePlannerBlendIntoGoalUnit, BlendUnitBlendDistanceBelowStepSize)
+{
+  std::vector<geometry_msgs::PoseStamped> plan = makeStraightLinePlan(0.0);
+  const std::vector<geometry_msgs::PoseStamped> original = plan;
+  const geometry_msgs::PoseStamped goal = makePose(1.02, 0.01, 0.3);
+
+  const double blend_distance = 0.01;
+  ASSERT_LT(blend_distance, CELL_SIZE);
+  sbpl_lattice_planner::blendIntoGoal(goal, blend_distance, plan);
+
+  ASSERT_EQ(plan.size(), original.size());
+  EXPECT_LT(positionError(plan.back().pose, goal.pose), 1e-12);
+  EXPECT_LT(yawError(plan.back().pose, goal.pose), 1e-12);
+
+  for (size_t i = 0; i + 1 < plan.size(); ++i)
+  {
+    EXPECT_LT(positionError(plan[i].pose, original[i].pose), 1e-12) << "pose " << i;
+    EXPECT_LT(yawError(plan[i].pose, original[i].pose), 1e-12) << "pose " << i;
+  }
+}
+
+// A one-pose plan becomes exactly the goal pose and does not crash.
+TEST(SbplLatticePlannerBlendIntoGoalUnit, BlendUnitSinglePosePlan)
+{
+  std::vector<geometry_msgs::PoseStamped> plan;
+  plan.push_back(makePose(0.0, 0.0, 0.0));
+  const geometry_msgs::PoseStamped goal = makePose(1.02, 0.01, 0.3);
+
+  sbpl_lattice_planner::blendIntoGoal(goal, 0.3, plan);
+
+  ASSERT_EQ(plan.size(), 1u);
+  EXPECT_LT(positionError(plan.back().pose, goal.pose), 1e-12);
+  EXPECT_LT(yawError(plan.back().pose, goal.pose), 1e-12);
+}
+
+// An empty plan stays empty and does not crash.
+TEST(SbplLatticePlannerBlendIntoGoalUnit, BlendUnitEmptyPlan)
+{
+  std::vector<geometry_msgs::PoseStamped> plan;
+  const geometry_msgs::PoseStamped goal = makePose(1.02, 0.01, 0.3);
+
+  sbpl_lattice_planner::blendIntoGoal(goal, 0.3, plan);
+
+  EXPECT_TRUE(plan.empty());
 }
 
 }  // namespace

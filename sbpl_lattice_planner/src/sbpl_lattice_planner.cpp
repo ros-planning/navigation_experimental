@@ -43,6 +43,11 @@
 #include <costmap_2d/inflation_layer.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf/transform_datatypes.h>
+#include <angles/angles.h>
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+#include <cmath>
 
 using namespace std;
 using namespace ros;
@@ -124,6 +129,7 @@ void SBPLLatticePlanner::initialize(std::string name, costmap_2d::Costmap2DROS* 
     private_nh.param<int>("visualizer_skip_poses", visualizer_skip_poses_, 5);
 
     private_nh.param("allow_unknown", allow_unknown_, bool(true));
+    private_nh.param("goal_blend_distance", goal_blend_distance_, 0.0);
 
     name_ = name;
     costmap_ros_ = costmap_ros;
@@ -466,7 +472,15 @@ bool SBPLLatticePlanner::makePlan(const geometry_msgs::PoseStamped& start,
     pose.pose.orientation.w = temp.getW();
 
     plan.push_back(pose);
+  }
 
+  // blendIntoGoal() is a no-op for a non-positive goal_blend_distance_ and for an empty plan.
+  blendIntoGoal(goal, goal_blend_distance_, plan);
+
+  // Keep the published visualization in sync with the (possibly blended) plan; this is the only copy of the plan
+  // into gui_path.
+  for (size_t i = 0; i < plan.size(); ++i)
+  {
     gui_path.poses[i] = plan[i];
   }
   plan_pub_.publish(gui_path);
@@ -531,5 +545,49 @@ void SBPLLatticePlanner::transformFootprintToEdges(const geometry_msgs::Pose& ro
       out_footprint[2 * i - 1].y = out_footprint[2 * i].y;
     }
   }
+}
+
+void blendIntoGoal(const geometry_msgs::PoseStamped& goal, double goal_blend_distance,
+                   std::vector<geometry_msgs::PoseStamped>& plan)
+{
+  if (goal_blend_distance <= 0.0 || plan.empty())
+  {
+    return;
+  }
+
+  // The last motion run of the plan: walk back from the plan end until goal_blend_distance of path is covered.
+  // In-place-turn poses (consecutive poses with identical positions, as produced by the turn-in-place primitives)
+  // contribute no length but are part of the tail walk, so a trailing turn ends up with w = 1: it is rigidly
+  // translated to the goal xy and yaw-shifted by the remaining dyaw, i.e. the turn happens at the goal position.
+  std::vector<double> distances(plan.size(), 0.0);
+  size_t tail = plan.size() - 1;
+  double length = 0.0;
+  while (tail > 0)
+  {
+    const auto& a = plan[tail - 1].pose.position;
+    const auto& b = plan[tail].pose.position;
+    double step = std::hypot(b.x - a.x, b.y - a.y);
+    if (length + step > goal_blend_distance)
+    {
+      break;
+    }
+    length += step;
+    --tail;
+    distances[tail] = length;  // path length from this pose to the plan end
+  }
+  const auto& end = plan.back().pose;
+  double dx = goal.pose.position.x - end.position.x, dy = goal.pose.position.y - end.position.y;
+  double dyaw = angles::shortest_angular_distance(tf2::getYaw(end.orientation), tf2::getYaw(goal.pose.orientation));
+  for (size_t i = tail; i + 1 < plan.size(); ++i)
+  {
+    double w = length > 0.0 ? 1.0 - distances[i] / length : 0.0;
+    auto& pose = plan[i].pose;
+    pose.position.x += w * dx;
+    pose.position.y += w * dy;
+    tf2::Quaternion q;
+    q.setRPY(0.0, 0.0, tf2::getYaw(pose.orientation) + w * dyaw);
+    pose.orientation = tf2::toMsg(q);
+  }
+  plan.back().pose = goal.pose;
 }
 };
