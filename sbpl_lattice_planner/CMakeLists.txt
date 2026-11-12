@@ -6,8 +6,8 @@ project(sbpl_lattice_planner)
 # Find dependencies
 ##############################################################################
 
-set(THIS_PACKAGE_ROS_DEPS roscpp costmap_2d nav_core pluginlib tf tf2
-  geometry_msgs nav_msgs)
+set(THIS_PACKAGE_ROS_DEPS roscpp costmap_2d nav_core pluginlib tf tf2 angles
+  tf2_geometry_msgs geometry_msgs nav_msgs)
 find_package(catkin REQUIRED COMPONENTS
   ${THIS_PACKAGE_ROS_DEPS} message_generation)
 
@@ -42,6 +42,19 @@ add_library(${PROJECT_NAME} src/sbpl_lattice_planner.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${SBPL_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_compile_options(${PROJECT_NAME} PUBLIC "-Wno-terminate")  # suppress warning from included SBPL header
+
+##############################################################################
+# Tests
+##############################################################################
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(test_sbpl_lattice_planner_exact_goal
+    test/sbpl_lattice_planner_exact_goal.test
+    test/test_sbpl_lattice_planner_exact_goal.cpp)
+  target_link_libraries(test_sbpl_lattice_planner_exact_goal ${PROJECT_NAME} ${catkin_LIBRARIES})
+  add_dependencies(test_sbpl_lattice_planner_exact_goal ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+endif()
 
 ##############################################################################
 # Install

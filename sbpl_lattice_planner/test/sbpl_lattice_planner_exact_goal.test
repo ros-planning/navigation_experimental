@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <test pkg="sbpl_lattice_planner" type="test_sbpl_lattice_planner_exact_goal"
+        test-name="test_sbpl_lattice_planner_exact_goal" time-limit="120">
+    <param name="SBPLLatticePlanner/primitive_filename"
+           value="$(find sbpl_lattice_planner)/test/unicycle_highcost_5cm.mprim"/>
+    <param name="SBPLLatticePlannerBlend/primitive_filename"
+           value="$(find sbpl_lattice_planner)/test/unicycle_highcost_5cm.mprim"/>
+  </test>
+</launch>

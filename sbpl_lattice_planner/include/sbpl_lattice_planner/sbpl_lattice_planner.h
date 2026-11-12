@@ -102,6 +102,8 @@ private:
 
   bool allow_unknown_;
 
+  double goal_blend_distance_; /**< length of the plan tail blended into the exact goal pose, 0 disables blending */
+
   std::string name_;
   costmap_2d::Costmap2DROS* costmap_ros_; /**< manages the cost map for us */
   std::vector<geometry_msgs::Point> footprint_;
@@ -112,6 +114,34 @@ private:
   ros::Publisher stats_publisher_;
   ros::Publisher sbpl_plan_footprint_pub_;
 };
+
+/**
+ * @brief Blends the tail of a plan into the exact requested goal pose.
+ *
+ * sbpl_lattice_planner leaves out the last intermediate pose of every motion
+ * primitive (it coincides with the first pose of the next one), so its plans
+ * end one sample short of the final primitive, and its goal is snapped to the
+ * lattice (5 cm cells, 22.5 degree headings). The DWB local planner steers to
+ * the last pose of the plan, which therefore ends up to half a cell, one
+ * primitive sample (up to 4.4 cm) and half a heading (11.25 degrees) away from
+ * where the robot was sent. The last motion of the plan (up to
+ * goal_blend_distance of it) is blended into the exact goal, so that a
+ * differential drive robot can correct the offset while still moving instead
+ * of facing a sideways jump at the very end. In-place-turn poses at the plan
+ * end (consecutive poses with identical x/y) are blended with w = 1 when the
+ * walk back from the plan end also includes at least one non-zero step, so a
+ * trailing turn is translated to the goal position instead of being left
+ * behind at the pre-blend position. (An all-turn tail, or a blend distance
+ * smaller than the preceding step, leaves the accumulated length at zero: every
+ * pose except the final one, which is set to the goal, stays unchanged.)
+ *
+ * @param goal The exact requested goal pose.
+ * @param goal_blend_distance Length of the plan tail to blend, in meters. A
+ *        value <= 0.0 (and an empty plan) leaves the plan unchanged.
+ * @param plan The plan to modify in place; its last pose is set to goal.pose.
+ */
+void blendIntoGoal(const geometry_msgs::PoseStamped& goal, double goal_blend_distance,
+                   std::vector<geometry_msgs::PoseStamped>& plan);
 };
 
 #endif
